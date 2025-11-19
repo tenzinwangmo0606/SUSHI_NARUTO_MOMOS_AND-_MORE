@@ -587,7 +587,7 @@ def order_submit(request):
     """
 
     try:
-        manager = [{"email":"vshigamaru@gmail.com" }]  #settings.ORDER_MANAGER_EMAIL
+        manager = [{"email":"info.sushinaruto@gmail.com" }]  #settings.ORDER_MANAGER_EMAIL
         send_new_email(to=manager, subject="New Order Received", content=message)
         print(order.email)
         customer = [{"email": order.email}]

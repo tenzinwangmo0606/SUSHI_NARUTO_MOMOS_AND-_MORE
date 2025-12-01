@@ -1,0 +1,130 @@
+/* excel_table.css */
+
+/* --- General Table Styles --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+thead {
+    background-color: #1e40af; /* Excel-like blue header */
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+thead th {
+    border: 1px solid #cbd5e1;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+tbody td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f3f4f6; /* light grey like Excel rows */
+}
+
+tbody tr:hover {
+    background-color: #e0f2fe; /* soft blue highlight on hover */
+    transition: background-color 0.3s ease;
+}
+
+/* --- Images --- */
+tbody img {
+    max-width: 80px;
+    max-height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* --- Action Links --- */
+td a {
+    text-decoration: none;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+a.text-green-600 {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+a.text-green-600:hover {
+    background-color: #10b981;
+    color: #fff;
+}
+
+a.text-red-600 {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+a.text-red-600:hover {
+    background-color: #ef4444;
+    color: #fff;
+}
+
+a.text-blue-600 {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+a.text-blue-600:hover {
+    background-color: #3b82f6;
+    color: #fff;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 768px) {
+    thead {
+        display: none;
+    }
+
+    tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 10px;
+    }
+
+    tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    tbody img {
+        max-width: 60px;
+        max-height: 50px;
+    }
+}

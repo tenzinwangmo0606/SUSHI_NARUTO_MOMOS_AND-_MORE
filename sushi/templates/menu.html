@@ -134,6 +134,69 @@
         padding: 3px 9px;
     }
 
+    /* Fixed Bottom Cart Bar */
+    .cart-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 2px solid #b91c1c;
+        padding: 1rem;
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 999;
+    }
+
+    .cart-bar.active {
+        display: flex;
+    }
+
+    .cart-bar-info {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        flex: 1;
+    }
+
+    .cart-bar-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .cart-bar-label {
+        font-size: 0.85rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .cart-bar-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #b91c1c;
+    }
+
+    .cart-bar-buy-btn {
+        background-color: #b91c1c;
+        color: white;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .cart-bar-buy-btn:hover {
+        background-color: #991b1b;
+        box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
+    }
+
     @media (max-width: 768px) {
         .menu-cards {
             flex-direction: column;
@@ -211,8 +274,24 @@
             cursor: pointer;
             text-decoration: underline;
         }
+
+        .cart-bar {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 0.8rem;
+        }
+
+        .cart-bar-info {
+            width: 100%;
+            justify-content: space-around;
+        }
+
+        .cart-bar-buy-btn {
+            width: 100%;
+        }
     }
 </style>
+
 <section class="relative bg-gradient-to-r from-red-50 to-white py-12 mb-8">
         <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
             <div class="w-full md:w-1/2 mb-6 md:mb-0 flex flex-col items-center md:items-start text-center md:text-left">
@@ -312,10 +391,10 @@
                                     <div class="menu-card" id="menu-item-{{ item.id }}">
                                         {% if item.image %}
                                         <img src="{{ item.image.url }}" alt="{{ item.name }}" class="cursor-pointer"
-                                            onclick="addToCartAndGoToCart('{{ item.name|escapejs }}', {{ item.price }})">
+                                            onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
                                         {% else %}
                                         <img src="{% static 'images/no-image.png' %}" alt="No image" class="cursor-pointer"
-                                            onclick="addToCartAndGoToCart('{{ item.name|escapejs }}', {{ item.price }})">
+                                            onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
                                         {% endif %}
                                         <div class="menu-card-content">
                                             <div class="menu-card-title">{{ item.name }}</div>
@@ -344,7 +423,7 @@
                                                 <div class="menu-card-price">{{ item.price }} CHF</div>
                                                 <button
                                                     class="bg-red-600 text-white rounded menu-card-order-btn hover:bg-red-700 transition"
-                                                    onclick="addToCartAndGoToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
+                                                    onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
                                                     Order
                                                 </button>
                                             </div>
@@ -362,9 +441,114 @@
     </div>
 </div>
 
+<!-- Fixed Bottom Cart Bar -->
+<div id="cartBar" class="cart-bar">
+    <div class="cart-bar-info">
+        <div class="cart-bar-item">
+            <span class="cart-bar-label">Items in Cart</span>
+            <span class="cart-bar-value" id="cartBarCount">0</span>
+        </div>
+        <div class="cart-bar-item">
+            <span class="cart-bar-label">Total Price</span>
+            <span class="cart-bar-value" id="cartBarTotal">0.00 CHF</span>
+        </div>
+    </div>
+    <button class="cart-bar-buy-btn" onclick="goToCart()">Buy Now</button>
+</div>
+
 <script>
-/* filepath: c:\Users\Admin\Music\sushi hotol\sarans\hotal\sushi_project\sushi\templates\menu.html - added JS */
+/* filepath: c:\Users\Admin\Music\sushi hotol\sarans\hotal\sushi_project\sushi\templates\menu.html */
+
+// Cart management functions
+function getCartFromStorage() {
+    const cart = localStorage.getItem('sushi_cart');
+    return cart ? JSON.parse(cart) : [];
+}
+
+function saveCartToStorage(cart) {
+    localStorage.setItem('sushi_cart', JSON.stringify(cart));
+    // Also update globalCart window object for cart.html to read
+    window.globalCart = JSON.parse(JSON.stringify(cart));
+    updateCartCount();
+}
+
+function updateCartCount() {
+    const cart = getCartFromStorage();
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const totalPrice = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+    
+    // Update cart count displays
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    cartCountElements.forEach(el => {
+        el.textContent = totalItems;
+    });
+
+    // Update bottom cart bar
+    const cartBar = document.getElementById('cartBar');
+    const cartBarCount = document.getElementById('cartBarCount');
+    const cartBarTotal = document.getElementById('cartBarTotal');
+    
+    if (totalItems > 0) {
+        cartBar.classList.add('active');
+        cartBarCount.textContent = totalItems;
+        cartBarTotal.textContent = totalPrice.toFixed(2) + ' CHF';
+    } else {
+        cartBar.classList.remove('active');
+    }
+}
+
+function addToCart(itemId, itemName, itemPrice) {
+    const cart = getCartFromStorage();
+    
+    // Check if item already exists in cart
+    const existingItem = cart.find(item => item.id == itemId);
+    
+    if (existingItem) {
+        existingItem.quantity = (existingItem.quantity || 1) + 1;
+    } else {
+        cart.push({
+            id: itemId,
+            name: itemName,
+            price: parseFloat(itemPrice),
+            quantity: 1
+        });
+    }
+    
+    saveCartToStorage(cart);
+}
+
+function goToCart() {
+    const cart = getCartFromStorage();
+    
+    if (cart.length === 0) {
+        alert('Your cart is empty');
+        return;
+    }
+    
+    // Simply navigate to cart page - cart.html will read from localStorage
+    window.location.href = '{% url "cart" %}';
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize globalCart from localStorage
+    window.globalCart = getCartFromStorage();
+    updateCartCount();
+    
     // Category dropdown toggle and click-to-scroll
     const categoryButton = document.getElementById('categoryButton');
     const categoryDropdown = document.getElementById('categoryDropdown');

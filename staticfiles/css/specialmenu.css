@@ -1,0 +1,207 @@
+/* specialmenu.css */
+
+/* --- General Styles --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    margin: 0;
+    padding: 20px;
+}
+
+h2, h3 {
+    color: #1f2937;
+    margin-bottom: 15px;
+}
+
+/* --- Form Styling --- */
+form {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+}
+
+form:hover {
+    transform: translateY(-2px);
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="file"],
+form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s ease;
+}
+
+form input:focus,
+form textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+form button {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+form button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* --- Table Styling --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    background: #ffffff;
+}
+
+thead {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    color: #fff;
+}
+
+thead th {
+    padding: 12px;
+    font-weight: 600;
+    text-align: left;
+}
+
+tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+tbody tr:hover {
+    background-color: #f1f5f9;
+    transition: background-color 0.3s ease;
+}
+
+tbody img {
+    max-width: 100px;
+    max-height: 70px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+/* --- Action Buttons --- */
+button, .action-btn {
+    border-radius: 8px;
+    
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+a button {
+    text-decoration: none;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.update-btn {
+    background: #fbbf24;
+    color: white;
+}
+
+.update-btn:hover {
+    background: #f59e0b;
+}
+
+.delete-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #b91c1c;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 1024px) {
+    form, table {
+        width: 95%;
+        margin: 0 auto 20px auto;
+    }
+}
+
+@media (max-width: 768px) {
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+    }
+
+    thead tr {
+        display: none;
+    }
+
+    tbody tr {
+        margin-bottom: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 10px;
+        background: #ffffff;
+    }
+
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border: none;
+    }
+
+    tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    tbody img {
+        max-width: 80px;
+        max-height: 50px;
+    }
+
+    form button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    h2, h3 {
+        font-size: 1.2rem;
+    }
+
+    form input, form textarea, form button {
+        font-size: 0.9rem;
+    }
+
+    tbody td {
+        font-size: 0.85rem;
+    }
+}

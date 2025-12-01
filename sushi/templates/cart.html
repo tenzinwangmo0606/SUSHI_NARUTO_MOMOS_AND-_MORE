@@ -4,505 +4,660 @@
 
 {% block content %}
 <div class="bg-gray-100 py-12">
-    <div class="container mx-auto px-4" x-data="cartPage()" x-cloak>
-
-        <!-- Stepper -->
-        <div class="max-w-3xl mx-auto mb-8">
-            <div class="flex items-center justify-center">
-                <div class="flex items-center" :class="step >= 1 ? 'text-red-600' : 'text-gray-500'">
-                    <!-- make step label clickable to go back to review -->
-                    <button type="button" @click="goToStep(1)" class="flex items-center focus:outline-none">
-                        <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 1 ? 'bg-red-600' : 'bg-gray-400'">1</div>
-                        <div class="ml-2 font-semibold">Review Cart</div>
-                    </button>
-                </div>
-                <div class="flex-auto border-t-2 mx-4" :class="step > 1 ? 'border-red-600' : 'border-gray-300'"></div>
-                <div class="flex items-center" :class="step >= 2 ? 'text-red-600' : 'text-gray-500'">
-                    <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 2 ? 'bg-red-600' : 'bg-gray-400'">2</div>
-                    <div class="ml-2 font-semibold">Your Details</div>
-                </div>
-                <div class="flex-auto border-t-2 mx-4" :class="step > 2 ? 'border-red-600' : 'border-gray-300'"></div>
-                <div class="flex items-center" :class="step >= 3 ? 'text-red-600' : 'text-gray-500'">
-                    <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 3 ? 'bg-red-600' : 'bg-gray-400'">3</div>
-                    <div class="ml-2 font-semibold">Confirm</div>
-                </div>
-            </div>
+  <div class="container mx-auto px-4" x-data="cartPage()" x-init="init()" x-cloak>
+    <!-- Stepper -->
+    <div class="max-w-3xl mx-auto mb-8">
+      <div class="flex items-center justify-center">
+        <div class="flex items-center" :class="step >= 1 ? 'text-red-600' : 'text-gray-500'">
+          <button type="button" @click="goToStep(1)" class="flex items-center focus:outline-none">
+            <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 1 ? 'bg-red-600' : 'bg-gray-400'">1</div>
+            <div class="ml-2 font-semibold">Review Cart</div>
+          </button>
         </div>
-
-        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8">
-
-            <!-- Step 1: Cart Review -->
-            <div x-show="step === 1">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Shopping Cart</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left font-semibold text-gray-600 p-2">Product</th>
-                                <th class="text-center font-semibold text-gray-600 p-2">Quantity</th>
-                                <th class="text-right font-semibold text-gray-600 p-2">Price</th>
-                                <th class="text-right font-semibold text-gray-600 p-2">Total</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-if="cart.length === 0">
-                                <tr>
-                                    <td colspan="5" class="text-center text-gray-500 py-8">Your cart is empty.</td>
-                                </tr>
-                            </template>
-                            <template x-for="(item, index) in cart" :key="index">
-                                <tr class="border-b">
-                                    <td class="p-4" x-text="item.name"></td>
-                                    <td class="p-4">
-                                        <div class="flex items-center justify-center">
-                                            <button @click="decrementQty(index)" class="text-gray-600 hover:text-red-600 focus:outline-none">-</button>
-                                            <span class="mx-4 w-8 text-center" x-text="item.qty"></span>
-                                            <button @click="incrementQty(index)" class="text-gray-600 hover:text-red-600 focus:outline-none">+</button>
-                                        </div>
-                                    </td>
-                                    <td class="p-4 text-right" x-text="item.price.toFixed(2) + ' CHF'"></td>
-                                    <td class="p-4 text-right" x-text="(item.price * item.qty).toFixed(2) + ' CHF'"></td>
-                                    <td class="p-4 text-right">
-                                        <button @click="removeFromCart(index)" class="text-gray-400 hover:text-red-600">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-8">
-                    <div class="flex justify-end items-center">
-                        <span class="text-gray-600 mr-4">Subtotal:</span>
-                        <span class="text-xl font-bold text-gray-800" x-text="cartTotal().toFixed(2) + ' CHF'"></span>
-                    </div>
-                    <div class="flex justify-end items-center mt-2" x-show="deliveryFee() > 0">
-                        <span class="text-gray-600 mr-4">Delivery Fee:</span>
-                        <span class="text-xl font-bold text-gray-800" x-text="deliveryFee().toFixed(2) + ' CHF'"></span>
-                    </div>
-                    <div class="flex justify-end items-center mt-4">
-                        <span class="text-lg font-semibold text-gray-800 mr-4">Total:</span>
-                        <span class="text-2xl font-bold text-red-600" x-text="grandTotal().toFixed(2) + ' CHF'"></span>
-                    </div>
-                </div>
-                <div class="flex justify-between mt-8">
-                    <a href="{% url 'menu' %}" class="text-red-600 font-semibold hover:underline">‹ Continue order</a>
-                    <button @click="nextStep()" :disabled="cart.length === 0" class="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 disabled:bg-gray-400">Next</button>
-                </div>
-            </div>
-
-            <!-- Step 2: User Details -->
-            <div x-show="step === 2">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Details</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-gray-600 mb-1">Email</label>
-                        <input type="email" x-model="email" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400" placeholder="your@email.com">
-                    </div>
-                    <div>
-                        <label class="block text-gray-600 mb-1">Mobile Number</label>
-                        <input type="tel" x-model="mobile" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400" placeholder="+41 12 345 67 89">
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <label class="block text-gray-600 mb-1">Address</label>
-                    <input type="text" x-model="address" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400" placeholder="Street, Number, City, ZIP">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div>
-                        <label class="block text-gray-600 mb-1">Delivery Method</label>
-                        <select x-model="delivery" @change="validateDelivery()" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
-                            <option value="Click & Collect">Click & Collect (Free)</option>
-                            <!-- <option value="Free">Free Delivery</option> -->
-                            <option value="Livraison Express 3.5km">Express Delivery (5 CHF)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-gray-600 mb-1">Order Time</label>
-                        <select x-model="orderType" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
-                            <option value="now">Order Now</option>
-                            <option value="later">Schedule for Later</option>
-                        </select>
-                    </div>
-                </div>
-                <div x-show="orderType === 'later'" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div>
-                        <label class="block text-gray-600 mb-1">Date</label>
-                        <input type="date" x-model="orderDate" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
-                    <div>
-                        <label class="block text-gray-600 mb-1">Time</label>
-                        <input type="time" x-model="orderTime" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
-                    </div>
-                </div>
-                <div x-show="error" class="mt-4 text-red-600 bg-red-100 border border-red-400 rounded-lg p-3" x-text="error"></div>
-                <div class="flex justify-between mt-8">
-                    <button @click="step = 1" class="text-gray-600 font-semibold hover:underline">‹ Back to Cart</button>
-                    <button @click="validateAndNext()" class="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700">Review Order</button>
-                </div>
-            </div>
-
-            <!-- Step 3: Order Summary -->
-            <div x-show="step === 3">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Confirm Your Order</h2>
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="font-semibold text-gray-700 mb-2">Your Details</h3>
-                            <p><strong>Email:</strong> <span x-text="email"></span></p>
-                            <p><strong>Mobile:</strong> <span x-text="mobile"></span></p>
-                            <p><strong>Address:</strong> <span x-text="address"></span></p>
-                        </div>
-                        <div>
-                            <h3 class="font-semibold text-gray-700 mb-2">Order Details</h3>
-                            <p><strong>Delivery:</strong> <span x-text="delivery"></span></p>
-                            <p><strong>Time:</strong> <span x-text="orderType === 'now' ? 'Now' : 'Scheduled'"></span></p>
-                            <div x-show="orderType === 'later'">
-                                <p><strong>Date:</strong> <span x-text="orderDate"></span> at <span x-text="orderTime"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6 border-t pt-4">
-                        <h3 class="font-semibold text-gray-700 mb-2">Items</h3>
-                        <ul>
-                            <template x-for="item in cart" :key="item.id">
-                                <li class="flex justify-between py-1">
-                                    <span><span x-text="item.qty"></span> x <span x-text="item.name"></span></span>
-                                    <span x-text="(item.qty * item.price).toFixed(2) + ' CHF'"></span>
-                                </li>
-                            </template>
-                        </ul>
-                        <div class="flex justify-end items-center mt-4 border-t pt-4">
-                            <span class="text-lg font-semibold text-gray-800 mr-4">Total:</span>
-                            <span class="text-2xl font-bold text-red-600" x-text="grandTotal().toFixed(2) + ' CHF'"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-between mt-8">
-                    <button @click="step = 2" class="text-gray-600 font-semibold hover:underline">‹ Edit Details</button>
-                    <button @click="submitOrder()" :disabled="loading" class="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 disabled:bg-gray-400 flex items-center">
-                        <span x-show="!loading">Confirm & Pay</span>
-                        <span x-show="loading">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 4: Order Success -->
-            <div x-show="step === 4" class="text-center py-12">
-                <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Order Successful!</h2>
-                <p class="text-gray-600">Thank you for your order <!-- . A confirmation has been sent to <strong x-text="email"></strong>. --></p>
-               
-                <!-- allow user to review cart (which is cleared) or go back to menu -->
-                <div class="mt-8 flex items-center justify-center gap-4">
-                    <button @click="goToStep(1)" class="inline-block bg-yellow-500 text-white px-6 py-2 rounded-lg shadow hover:bg-yellow-600">Review Cart</button>
-                    <a href="{% url 'menu' %}" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700">Back to Menu</a>
-                </div>
-            </div>
+        <div class="flex-auto border-t-2 mx-4" :class="step > 1 ? 'border-red-600' : 'border-gray-300'"></div>
+        <div class="flex items-center" :class="step >= 2 ? 'text-red-600' : 'text-gray-500'">
+          <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 2 ? 'bg-red-600' : 'bg-gray-400'">2</div>
+          <div class="ml-2 font-semibold">Your Details</div>
         </div>
+        <div class="flex-auto border-t-2 mx-4" :class="step > 2 ? 'border-red-600' : 'border-gray-300'"></div>
+        <div class="flex items-center" :class="step >= 3 ? 'text-red-600' : 'text-gray-500'">
+          <div class="rounded-full h-8 w-8 flex items-center justify-center text-white" :class="step >= 3 ? 'bg-red-600' : 'bg-gray-400'">3</div>
+          <div class="ml-2 font-semibold">Confirm</div>
+        </div>
+      </div>
     </div>
+
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8">
+      <!-- Step 1: Cart Review -->
+      <div x-show="step === 1">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Shopping Cart</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr>
+                <th class="text-left font-semibold text-gray-600 p-2">Product</th>
+                <th class="text-center font-semibold text-gray-600 p-2">Quantity</th>
+                <th class="text-right font-semibold text-gray-600 p-2">Price</th>
+                <th class="text-right font-semibold text-gray-600 p-2">Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="cart.length === 0">
+                <tr>
+                  <td colspan="5" class="text-center text-gray-500 py-8">Your cart is empty.</td>
+                </tr>
+              </template>
+              <template x-for="(item, index) in cart" :key="item.id ? item.id : index">
+                <tr class="border-b">
+                  <td class="p-4">
+                    <div class="font-medium" x-text="item.name"></div>
+                    <div class="text-sm text-gray-500" x-text="item.description ? item.description : ''"></div>
+                  </td>
+                  <td class="p-4">
+                    <div class="flex items-center justify-center">
+                      <button @click="decrementQty(index)" class="text-gray-600 hover:text-red-600 focus:outline-none px-2">-</button>
+                      <span class="mx-4 w-8 text-center" x-text="item.qty"></span>
+                      <button @click="incrementQty(index)" class="text-gray-600 hover:text-red-600 focus:outline-none px-2">+</button>
+                    </div>
+                  </td>
+                  <td class="p-4 text-right" x-text="formatPrice(item.price)"></td>
+                  <td class="p-4 text-right" x-text="formatPrice(item.price * item.qty)"></td>
+                  <td class="p-4 text-right">
+                    <button @click="removeFromCart(index)" class="text-gray-400 hover:text-red-600" title="Remove">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-8">
+          <div class="flex justify-end items-center">
+            <span class="text-gray-600 mr-4">Subtotal:</span>
+            <span class="text-xl font-bold text-gray-800" x-text="formatPrice(cartTotal())"></span>
+          </div>
+          <div class="flex justify-end items-center mt-2" x-show="deliveryFee() > 0">
+            <span class="text-gray-600 mr-4">Delivery Fee:</span>
+            <span class="text-xl font-bold text-gray-800" x-text="formatPrice(deliveryFee())"></span>
+          </div>
+          <div class="flex justify-end items-center mt-4">
+            <span class="text-lg font-semibold text-gray-800 mr-4">Total:</span>
+            <span class="text-2xl font-bold text-red-600" x-text="formatPrice(grandTotal())"></span>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <a href="{% url 'menu' %}" class="text-red-600 font-semibold hover:underline">‹ Continue order</a>
+          <button @click="nextStep()" :disabled="cart.length === 0" class="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 disabled:bg-gray-400">Next</button>
+        </div>
+      </div>
+
+      <!-- Step 2: User Details -->
+      <div x-show="step === 2" style="display: none;">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-gray-600 mb-1">Email</label>
+            <input
+              type="email"
+              x-model="email"
+              @blur="onEmailBlur()"
+              :class="['w-full rounded-lg px-4 py-2 focus:outline-none focus:ring-2', emailTouched ? (emailValidFormat ? (emailMxValid === true ? 'border-green-500 focus:ring-green-400' : (emailChecking ? 'border-yellow-400 focus:ring-yellow-300' : 'border-yellow-500 focus:ring-yellow-300')) : 'border-red-500 focus:ring-red-300') : 'border']"
+              placeholder="your@email.com"
+              aria-describedby="emailHelp"
+            >
+            <p id="emailHelp" class="mt-1 text-sm" x-show="emailTouched">
+              <span x-show="!emailValidFormat" class="text-red-600">Please enter a valid email address.</span>
+              <span x-show="emailValidFormat && emailChecking" class="text-yellow-700">Checking email domain...</span>
+              <span x-show="emailValidFormat && emailMxValid === false" class="text-red-600">Email domain appears invalid (no MX records found).</span>
+              <span x-show="emailValidFormat && emailMxValid === null" class="text-yellow-700">Could not verify email domain; we'll proceed but please ensure the address is correct.</span>
+              <span x-show="emailValidFormat && emailMxValid === true" class="text-green-600">Email looks good.</span>
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-gray-600 mb-1">Mobile Number</label>
+            <input
+              type="tel"
+              x-model="mobile"
+              @blur="onMobileBlur()"
+              :class="['w-full rounded-lg px-4 py-2 focus:outline-none focus:ring-2', mobileTouched ? (mobileValid ? 'border-green-500 focus:ring-green-400' : 'border-red-500 focus:ring-red-300') : 'border']"
+              placeholder="+41 12 345 67 89"
+            >
+            <p x-show="mobileTouched && !mobileValid" class="text-red-600 text-sm mt-1">Please enter a valid phone number (local or international).</p>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <label class="block text-gray-600 mb-1">Address</label>
+          <input type="text" x-model="address" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400" placeholder="Street, Number, City, ZIP">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label class="block text-gray-600 mb-1">Delivery Method</label>
+            <select x-model="delivery" @change="validateDelivery()" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
+              <option value="Click & Collect">Click & Collect (Free)</option>
+              <option value="Livraison Express 3.5km">Express Delivery (5 CHF)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-600 mb-1">Order Time</label>
+            <select x-model="orderType" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
+              <option value="now">Order Now</option>
+              <option value="later">Schedule for Later</option>
+            </select>
+          </div>
+        </div>
+
+        <div x-show="orderType === 'later'" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label class="block text-gray-600 mb-1">Date</label>
+            <input type="date" x-model="orderDate" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
+          </div>
+          <div>
+            <label class="block text-gray-600 mb-1">Time</label>
+            <input type="time" x-model="orderTime" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-400">
+          </div>
+        </div>
+
+        <div x-show="error" class="mt-4 text-red-600 bg-red-100 border border-red-400 rounded-lg p-3" x-text="error"></div>
+
+        <div class="flex justify-between mt-8">
+          <button @click="step = 1" class="text-gray-600 font-semibold hover:underline">‹ Back to Cart</button>
+          <button @click="validateAndNext()" class="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700">Review Order</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Order Summary -->
+      <div x-show="step === 3" style="display: none;">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Confirm Your Order</h2>
+        <div class="bg-gray-50 rounded-lg p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="font-semibold text-gray-700 mb-2">Your Details</h3>
+              <p><strong>Email:</strong> <span x-text="email"></span></p>
+              <p><strong>Mobile:</strong> <span x-text="mobile"></span></p>
+              <p><strong>Address:</strong> <span x-text="address"></span></p>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-700 mb-2">Order Details</h3>
+              <p><strong>Delivery:</strong> <span x-text="delivery"></span></p>
+              <p><strong>Time:</strong> <span x-text="orderType === 'now' ? 'Now' : 'Scheduled'"></span></p>
+              <div x-show="orderType === 'later'">
+                <p><strong>Date:</strong> <span x-text="orderDate"></span> at <span x-text="orderTime"></span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 border-t pt-4">
+            <h3 class="font-semibold text-gray-700 mb-2">Items</h3>
+            <ul>
+              <template x-for="item in cart" :key="item.id ? item.id : item.name">
+                <li class="flex justify-between py-1">
+                  <span><span x-text="item.qty"></span> × <span x-text="item.name"></span></span>
+                  <span x-text="formatPrice(item.qty * item.price)"></span>
+                </li>
+              </template>
+            </ul>
+
+            <div class="flex justify-end items-center mt-4 border-t pt-4">
+              <span class="text-lg font-semibold text-gray-800 mr-4">Total:</span>
+              <span class="text-2xl font-bold text-red-600" x-text="formatPrice(grandTotal())"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-8">
+          <button @click="step = 2" class="text-gray-600 font-semibold hover:underline">‹ Edit Details</button>
+          <button @click="submitOrder()" :disabled="loading" class="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 disabled:bg-gray-400 flex items-center">
+            <span x-show="!loading">Confirm & Pay</span>
+            <span x-show="loading">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Order Success -->
+      <div x-show="step === 4" class="text-center py-12" style="display: none;">
+        <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Order Successful!</h2>
+        <p class="text-gray-600">Thank you for your order.</p>
+
+        <div class="mt-8 flex items-center justify-center gap-4">
+          <button @click="goToStep(1)" class="inline-block bg-yellow-500 text-white px-6 py-2 rounded-lg shadow hover:bg-yellow-600">Review Cart</button>
+          <a href="{% url 'menu' %}" class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700">Back to Menu</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- Ensure AJAX requests include CSRF and credentials -->
+<!-- CSRF helper and cart storage utilities -->
 <script>
-	// helper to read csrftoken cookie
-	function getCookie(name) {
-		let cookieValue = null;
-		if (document.cookie && document.cookie !== '') {
-			const cookies = document.cookie.split(';');
-			for (let i = 0; i < cookies.length; i++) {
-				const cookie = cookies[i].trim();
-				if (cookie.substring(0, name.length + 1) === (name + '=')) {
-					cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-					break;
-				}
-			}
-		}
-		return cookieValue;
-	}
-	const CSRFTOKEN = getCookie('csrftoken');
+  // read csrftoken cookie (safe fallback)
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const CSRFTOKEN = getCookie('csrftoken');
 
-	// Example: ensure forms that perform AJAX post use CSRF and credentials
-	document.querySelectorAll('.cart-action-form').forEach(form => {
-		form.addEventListener('submit', async function(e) {
-			e.preventDefault();
-			const url = this.action;
-			const fd = new FormData(this);
-			try {
-				const resp = await fetch(url, {
-					method: 'POST',
-					body: fd,
-					credentials: 'same-origin',
-					headers: {
-						'X-Requested-With': 'XMLHttpRequest',
-						'X-CSRFToken': CSRFTOKEN
-					}
-				});
-				// handle response (JSON or redirect)...
-			} catch (err) {
-				console.error('Cart action failed', err);
-			}
-		});
-	});
+  // Simple global cart utilities (localStorage-backed)
+  window.globalCart = window.globalCart || JSON.parse(localStorage.getItem('sushi_cart') || '[]');
+
+  window.updateCartStorage = function (newCart) {
+    window.globalCart = JSON.parse(JSON.stringify(newCart));
+    localStorage.setItem('sushi_cart', JSON.stringify(window.globalCart));
+    window.dispatchEvent(new Event('cart-updated'));
+  };
+
+  window.clearCart = function () {
+    window.globalCart = [];
+    localStorage.setItem('sushi_cart', JSON.stringify([]));
+    window.dispatchEvent(new Event('cart-updated'));
+  };
+
+  // If other code calls updateGlobalCart() (per your earlier snippets), provide alias
+  window.updateGlobalCart = window.updateCartStorage;
 </script>
 
+<!-- Alpine.js component -->
 <script>
-function cartPage() {
+  function cartPage() {
     return {
-        step: 1,
-        cart: [],
-        orderType: 'now',
-        orderDate: '',
-        orderTime: '',
-        email: '{{ request.user.email|default:"" }}',
-        mobile: '',
-        address: '',
-        delivery: 'Click & Collect',
-        loading: false,
-        error: '',
+      // state
+      step: 1,
+      cart: [],
+      orderType: 'now',
+      orderDate: '',
+      orderTime: '',
+      email: '{{ request.user.email|default:"" }}',
+      emailTouched: false,
+      emailValidFormat: false,
+      emailMxValid: null, // true/false/null
+      emailChecking: false,
+      mobile: '',
+      mobileTouched: false,
+      mobileValid: false,
+      address: '',
+      delivery: 'Click & Collect',
+      loading: false,
+      error: '',
 
-        init() {
-            this.cart = [...window.globalCart];
-            window.addEventListener('cart-updated', () => {
-                this.cart = [...window.globalCart];
-            });
-            // If cart is empty, and we are on step 1, maybe redirect to menu? Or just show empty message.
-            // For now, showing empty message is fine.
-        },
+      // init: sync from localStorage cart
+      init() {
+        // Read directly from localStorage
+        const storageCart = JSON.parse(localStorage.getItem('sushi_cart') || '[]');
+        
+        // Convert to display format with qty property
+        this.cart = storageCart.map(item => ({
+          id: String(item.id),
+          name: String(item.name || ''),
+          price: parseFloat(item.price) || 0,
+          quantity: parseInt(item.quantity) || 1,
+          qty: parseInt(item.quantity) || 1,
+          description: item.description || ''
+        }));
+        
+        // Listen for cart updates from other tabs/windows
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'sushi_cart') {
+            const updated = JSON.parse(event.newValue || '[]');
+            this.cart = updated.map(item => ({
+              id: String(item.id),
+              name: String(item.name || ''),
+              price: parseFloat(item.price) || 0,
+              quantity: parseInt(item.quantity) || 1,
+              qty: parseInt(item.quantity) || 1,
+              description: item.description || ''
+            }));
+          }
+        });
+      },
 
-        // navigate to a specific step, clear errors
-        goToStep(n) {
-            this.error = '';
-            this.step = n;
-        },
+      // navigation
+      goToStep(n) {
+        this.error = '';
+        this.step = n;
+      },
 
-        // reset form details to defaults (keeps email if you prefer; here we reset all except email)
-        clearDetails() {
-            this.mobile = '';
-            this.address = '';
-            this.delivery = 'Click & Collect';
-            this.orderType = 'now';
-            this.orderDate = '';
-            this.orderTime = '';
-            this.error = '';
-            this.loading = false;
-        },
+      // reset details (keeps email)
+      clearDetails() {
+        this.mobile = '';
+        this.address = '';
+        this.delivery = 'Click & Collect';
+        this.orderType = 'now';
+        this.orderDate = '';
+        this.orderTime = '';
+        this.error = '';
+        this.loading = false;
+      },
 
-        nextStep() {
-            if (this.cart.length > 0) {
-                this.step = 2;
-            }
-        },
+      // move forward
+      nextStep() {
+        if (this.cart.length > 0) {
+          this.step = 2;
+        }
+      },
 
-        validateDelivery() {
-            if (this.delivery === 'Livraison Express 3.5km') {
-                this.error = 'For now, we only offer takeaway. Home delivery is not available at the moment, but will be coming very soon. Please contact us to place your order';
-            } else {
-                this.error = '';
-            }
-        },
+      // Delivery validation
+      validateDelivery() {
+        if (this.delivery === 'Livraison Express 3.5km') {
+          this.error = 'For now, we only offer takeaway. Home delivery is not available at the moment, but will be coming very soon. Please contact us to place your order';
+        } else {
+          this.error = '';
+        }
+      },
 
-        validateAndNext() {
-            this.error = '';
-            if (this.delivery === 'Livraison Express 3.5km') {
-                this.error = 'For now, we only offer takeaway. Home delivery is not available at the moment, but will be coming very soon. Please contact us to place your order';
-                return;
-            }
-            if (!this.email || !this.mobile || !this.address) {
-                this.error = 'Please fill in all your details.';
-                return;
-            }
-            if (this.orderType === 'later' && (!this.orderDate || !this.orderTime)) {
-                this.error = 'Please select a date and time for your scheduled order.';
-                return;
-            }
-            this.step = 3;
-        },
+      // email check (format)
+      isValidEmail(email) {
+        if (!email) return false;
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      },
 
-        incrementQty(index) {
-            this.cart[index].qty++;
-            this.updateGlobalCart();
-        },
+      onEmailBlur() {
+        this.emailTouched = true;
+        this.emailValidFormat = this.isValidEmail(this.email);
+        this.emailMxValid = null;
 
-        decrementQty(index) {
-            if (this.cart[index].qty > 1) {
-                this.cart[index].qty--;
-            } else {
-                this.cart.splice(index, 1);
-            }
-            this.updateGlobalCart();
-        },
-
-        removeFromCart(index) {
-            this.cart.splice(index, 1);
-            this.updateGlobalCart();
-        },
-
-        updateGlobalCart() {
-            window.globalCart = [...this.cart];
-            window.dispatchEvent(new CustomEvent('cart-updated'));
-            localStorage.setItem('sushiNarutoCart', JSON.stringify(window.globalCart));
-        },
-
-        cartTotal() {
-            return this.cart.reduce((total, item) => total + (item.price * item.qty), 0);
-        },
-
-        deliveryFee() {
-            return this.delivery === 'Livraison Express 3.5km' ? 5 : 0;
-        },
-
-        grandTotal() {
-            return this.cartTotal() + this.deliveryFee();
-        },
-
-        submitOrder() {
-            this.loading = true;
-            this.error = '';
-
-            // capture current cart/details now (before clearing)
-            const currentCart = JSON.parse(JSON.stringify(this.cart));
-            const currentEmail = this.email;
-            const currentMobile = this.mobile;
-            const currentAddress = this.address;
-            const currentDelivery = this.delivery;
-            const currentOrderType = this.orderType;
-            const currentOrderDate = this.orderDate;
-            const currentOrderTime = this.orderTime;
-
-            fetch("{% url 'order_submit' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    cart: currentCart,
-                    orderType: currentOrderType,
-                    orderDate: currentOrderDate,
-                    orderTime: currentOrderTime,
-                    email: currentEmail,
-                    mobile: currentMobile,
-                    address: currentAddress,
-                    delivery: currentDelivery
-                })
+        if (this.emailValidFormat) {
+          this.emailChecking = true;
+          const domain = this.email.split('@')[1];
+          if (!domain) {
+            this.emailMxValid = false;
+            this.emailChecking = false;
+            return;
+          }
+          this.checkEmailMx(domain)
+            .then(mxFound => {
+              this.emailMxValid = mxFound === true;
             })
-            .then(res => res.json())
-            .then(data => {
-                this.loading = false;
-
-                // Build email body from captured details
-                let bodyLines = [];
-                bodyLines.push('New order received');
-                bodyLines.push('');
-                bodyLines.push('Customer details:');
-                bodyLines.push('Email: ' + (currentEmail || 'N/A'));
-                bodyLines.push('Mobile: ' + (currentMobile || 'N/A'));
-                bodyLines.push('Address: ' + (currentAddress || 'N/A'));
-                bodyLines.push('Delivery: ' + (currentDelivery || 'N/A'));
-                bodyLines.push('Order time: ' + (currentOrderType === 'now' ? 'Now' : ('Scheduled: ' + currentOrderDate + ' ' + currentOrderTime)));
-                bodyLines.push('');
-                bodyLines.push('Items:');
-
-                let subtotal = 0;
-                currentCart.forEach(item => {
-                    const lineTotal = (item.price * item.qty);
-                    subtotal += lineTotal;
-                    bodyLines.push(`${item.qty} x ${item.name} — ${lineTotal.toFixed(2)} CHF (unit ${item.price.toFixed(2)} CHF)`);
-                });
-
-                const deliveryFee = currentDelivery === 'Livraison Express 3.5km' ? 5 : 0;
-                const total = subtotal + deliveryFee;
-
-                bodyLines.push('');
-                bodyLines.push('Subtotal: ' + subtotal.toFixed(2) + ' CHF');
-                if (deliveryFee > 0) bodyLines.push('Delivery fee: ' + deliveryFee.toFixed(2) + ' CHF');
-                bodyLines.push('Total: ' + total.toFixed(2) + ' CHF');
-                bodyLines.push('');
-
-                if (data && data.success) {
-                    bodyLines.push('Order status: Submitted successfully.');
-                    if (data.order_id) bodyLines.push('Order ID: ' + data.order_id);
-                } else {
-                    bodyLines.push('Order status: FAILED to submit to server.');
-                    if (data && data.error) bodyLines.push('Server error: ' + data.error);
-                }
-
-                const bodyString = bodyLines.join('\r\n');
-                const subject = 'New Order from ' + (currentEmail || 'Guest');
-                const mailto = 'mailto:saranvignesh55@gmail.com'
-                    + '?subject=' + encodeURIComponent(subject)
-                    + '&body=' + encodeURIComponent(bodyString);
-
-                // Open user's mail client with prefilled email to manager
-                window.location.href = mailto;
-
-                if (data && data.success) {
-                    // clear component cart then persist empty global cart
-                    this.cart = [];
-                    this.updateGlobalCart(); // writes empty cart to window.globalCart and localStorage
-                    this.clearDetails();
-                    this.step = 4;
-                } else {
-                    // show error on summary page
-                    this.error = (data && data.error) ? data.error : 'An unknown error occurred.';
-                    this.step = 3;
-                }
+            .catch(() => {
+              this.emailMxValid = null;
             })
-            .catch(err => {
-                this.loading = false;
-
-                // Build and send email with failure note so manager still receives order details
-                let bodyLines = [];
-                bodyLines.push('New order attempted BUT failed to submit to server (client-side error).');
-                bodyLines.push('');
-                bodyLines.push('Customer details:');
-                bodyLines.push('Email: ' + (this.email || 'N/A'));
-                bodyLines.push('Mobile: ' + (this.mobile || 'N/A'));
-                bodyLines.push('Address: ' + (this.address || 'N/A'));
-                bodyLines.push('Delivery: ' + (this.delivery || 'N/A'));
-                bodyLines.push('Order time: ' + (this.orderType === 'now' ? 'Now' : ('Scheduled: ' + this.orderDate + ' ' + this.orderTime)));
-                bodyLines.push('');
-                bodyLines.push('Items:');
-
-                let subtotal = 0;
-                this.cart.forEach(item => {
-                    const lineTotal = (item.price * item.qty);
-                    subtotal += lineTotal;
-                    bodyLines.push(`${item.qty} x ${item.name} — ${lineTotal.toFixed(2)} CHF (unit ${item.price.toFixed(2)} CHF)`);
-                });
-
-                const deliveryFee = this.delivery === 'Livraison Express 3.5km' ? 5 : 0;
-                const total = subtotal + deliveryFee;
-
-                bodyLines.push('');
-                bodyLines.push('Subtotal: ' + subtotal.toFixed(2) + ' CHF');
-                if (deliveryFee > 0) bodyLines.push('Delivery fee: ' + deliveryFee.toFixed(2) + ' CHF');
-                bodyLines.push('Total: ' + total.toFixed(2) + ' CHF');
-                bodyLines.push('');
-                bodyLines.push('Client error message: ' + (err && err.message ? err.message : String(err)));
-
-                const bodyString = bodyLines.join('\r\n');
-                const subject = 'New Order (FAILED SUBMIT) from ' + (this.email || 'Guest');
-                const mailto = 'mailto:saranvignesh55@gmail.com'
-                    + '?subject=' + encodeURIComponent(subject)
-                    + '&body=' + encodeURIComponent(bodyString);
-
-                window.location.href = mailto;
-
-                this.error = 'Could not connect to the server. Please try again later.';
-                this.step = 3;
+            .finally(() => {
+              this.emailChecking = false;
             });
         }
-    }
-}
+      },
+
+      // best-effort MX check via Cloudflare DoH (may be blocked by CORS)
+      async checkEmailMx(domain) {
+        try {
+          const url = 'https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent(domain) + '&type=MX';
+          const resp = await fetch(url, { headers: { Accept: 'application/dns-json' } });
+          if (!resp.ok) return null;
+          const data = await resp.json();
+          if (Array.isArray(data.Answer) && data.Answer.length > 0) {
+            return true;
+          }
+          return false;
+        } catch (err) {
+          // network/CORS issue
+          return null;
+        }
+      },
+
+      // mobile validator: digits only, 7-15 digits
+      isValidMobile(m) {
+        if (!m) return false;
+        const digits = String(m).replace(/\D/g, '');
+        return digits.length >= 7 && digits.length <= 15;
+      },
+
+      onMobileBlur() {
+        this.mobileTouched = true;
+        this.mobileValid = this.isValidMobile(this.mobile);
+      },
+
+      // formatting
+      formatPrice(n) {
+        if (typeof n !== 'number') n = Number(n) || 0;
+        return n.toFixed(2) + ' CHF';
+      },
+
+      // cart calculations
+      cartTotal() {
+        return this.cart.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
+      },
+
+      deliveryFee() {
+        return this.delivery === 'Livraison Express 3.5km' ? 5.0 : 0.0;
+      },
+
+      grandTotal() {
+        return this.cartTotal() + this.deliveryFee();
+      },
+
+      // cart mutations (update localStorage after changes)
+      incrementQty(index) {
+        if (!this.cart[index]) return;
+        this.cart[index].qty = Number(this.cart[index].qty || 0) + 1;
+        this.cart[index].quantity = this.cart[index].qty;
+        this.saveToLocalStorage();
+      },
+
+      decrementQty(index) {
+        if (!this.cart[index]) return;
+        const q = Number(this.cart[index].qty || 0);
+        if (q > 1) {
+          this.cart[index].qty = q - 1;
+          this.cart[index].quantity = this.cart[index].qty;
+        } else {
+          this.cart.splice(index, 1);
+        }
+        this.saveToLocalStorage();
+      },
+
+      removeFromCart(index) {
+        if (!this.cart[index]) return;
+        this.cart.splice(index, 1);
+        this.saveToLocalStorage();
+      },
+
+      // Save cart back to localStorage
+      saveToLocalStorage() {
+        const cartToSave = this.cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.qty,
+          description: item.description
+        }));
+        localStorage.setItem('sushi_cart', JSON.stringify(cartToSave));
+      },
+
+      // Validate details and progress
+      validateAndNext() {
+        this.error = '';
+
+        this.emailTouched = true;
+        this.emailValidFormat = this.isValidEmail(this.email);
+        if (!this.emailValidFormat) {
+          this.error = 'Please enter a valid email address.';
+          return;
+        }
+
+        this.mobileTouched = true;
+        this.mobileValid = this.isValidMobile(this.mobile);
+        if (!this.mobileValid) {
+          this.error = 'Please enter a valid mobile number.';
+          return;
+        }
+
+        if (this.emailMxValid === false) {
+          this.error = 'Email domain appears invalid. Please verify your email address.';
+          return;
+        }
+
+        if (this.emailChecking) {
+          this.error = 'Please wait while we verify your email domain.';
+          return;
+        }
+
+        if (!this.address) {
+          this.error = 'Please fill in your address.';
+          return;
+        }
+
+        if (this.delivery === 'Livraison Express 3.5km') {
+          this.error = 'For now, we only offer takeaway. Home delivery is not available at the moment.';
+          return;
+        }
+
+        if (this.orderType === 'later' && (!this.orderDate || !this.orderTime)) {
+          this.error = 'Please select a date and time for your scheduled order.';
+          return;
+        }
+
+        this.step = 3;
+      },
+
+      // Submit order to server (and fallback to mailto if network fails)
+      submitOrder() {
+        // Basic checks
+        this.emailTouched = true;
+        this.emailValidFormat = this.isValidEmail(this.email);
+        if (!this.emailValidFormat) {
+          this.error = 'Please enter a valid email address.';
+          this.step = 2;
+          return;
+        }
+        if (this.emailChecking) {
+          this.error = 'Please wait while we verify your email domain.';
+          this.step = 2;
+          return;
+        }
+        if (this.emailMxValid === false) {
+          this.error = 'Email domain looks invalid. Please correct your email before submitting.';
+          this.step = 2;
+          return;
+        }
+
+        this.mobileTouched = true;
+        this.mobileValid = this.isValidMobile(this.mobile);
+        if (!this.mobileValid) {
+          this.error = 'Please enter a valid mobile number.';
+          this.step = 2;
+          return;
+        }
+
+        // proceed
+        this.loading = true;
+        this.error = '';
+
+        // Capture the current state
+        const payload = {
+          cart: this.cart,
+          orderType: this.orderType,
+          orderDate: this.orderDate,
+          orderTime: this.orderTime,
+          email: this.email,
+          mobile: this.mobile,
+          address: this.address,
+          delivery: this.delivery
+        };
+
+        fetch("{% url 'order_submit' %}", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CSRFTOKEN,
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(async res => {
+          // attempt parse JSON, but handle non-JSON responses too
+          let data = {};
+          try { data = await res.json(); } catch (e) { data = { success: false, error: 'Invalid server response' }; }
+          if (res.ok && data && data.success) {
+            // successful
+            this.loading = false;
+            // clear cart and show success
+            window.clearCart();
+            this.clearDetails();
+            this.step = 4;
+          } else {
+            // server returned error
+            this.loading = false;
+            this.error = (data && (data.error || data.message)) ? (data.error || data.message) : 'Server rejected the order. Please try again.';
+            // Still offer a mailto fallback so manager receives details
+            this.sendMailFallback(payload, data);
+            this.step = 3;
+          }
+        })
+        .catch(err => {
+          // network error - fallback to mailto
+          this.loading = false;
+          this.error = 'Could not connect to server. Using email fallback.';
+          this.sendMailFallback(payload, { client_error: (err && err.message) ? err.message : String(err) });
+          this.step = 3;
+        });
+      },
+
+      // build and open a mailto: link with order details (fallback)
+      sendMailFallback(payload, serverInfo) {
+        let bodyLines = [];
+        bodyLines.push('New order (fallback - client/server issue)');
+        bodyLines.push('');
+        bodyLines.push('Customer details:');
+        bodyLines.push('Email: ' + (payload.email || 'N/A'));
+        bodyLines.push('Mobile: ' + (payload.mobile || 'N/A'));
+        bodyLines.push('Address: ' + (payload.address || 'N/A'));
+        bodyLines.push('Delivery: ' + (payload.delivery || 'N/A'));
+        bodyLines.push('Order time: ' + (payload.orderType === 'now' ? 'Now' : ('Scheduled: ' + payload.orderDate + ' ' + payload.orderTime)));
+        bodyLines.push('');
+        bodyLines.push('Items:');
+
+        let subtotal = 0;
+        (payload.cart || []).forEach(item => {
+          const unit = Number(item.price || 0);
+          const qty = Number(item.qty || 0);
+          const lineTotal = unit * qty;
+          subtotal += lineTotal;
+          bodyLines.push(`${qty} x ${item.name} — ${lineTotal.toFixed(2)} CHF (unit ${unit.toFixed(2)} CHF)`);
+        });
+
+        const deliveryFee = payload.delivery === 'Livraison Express 3.5km' ? 5 : 0;
+        const total = subtotal + deliveryFee;
+
+        bodyLines.push('');
+        bodyLines.push('Subtotal: ' + subtotal.toFixed(2) + ' CHF');
+        if (deliveryFee > 0) bodyLines.push('Delivery fee: ' + deliveryFee.toFixed(2) + ' CHF');
+        bodyLines.push('Total: ' + total.toFixed(2) + ' CHF');
+        bodyLines.push('');
+        if (serverInfo) {
+          bodyLines.push('Server info: ' + JSON.stringify(serverInfo));
+        }
+
+        const bodyString = bodyLines.join('\r\n');
+        const subject = 'New Order (FALLBACK) from ' + (payload.email || 'Guest');
+        const mailto = 'mailto:saranvignesh55@gmail.com' + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyString);
+
+        // open user's mail client
+        window.location.href = mailto;
+      }
+    };
+  }
 </script>
 {% endblock %}

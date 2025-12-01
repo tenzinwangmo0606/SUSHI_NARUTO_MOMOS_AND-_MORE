@@ -1,0 +1,196 @@
+/* menuitem.css */
+
+/* --- General Page Styles --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    color: #1f2937;
+    margin-bottom: 20px;
+}
+
+/* --- Buttons --- */
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#add-category-btn {
+    background-color: #3b82f6;
+    color: white;
+    margin-bottom: 20px;
+}
+
+#add-category-btn:hover {
+    background-color: #2563eb;
+}
+
+/* --- Modal --- */
+#categoryModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #111827;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 20px;
+    background: none;
+    color: #9ca3af;
+    border: none;
+    cursor: pointer;
+}
+
+.modal-content .close:hover {
+    color: #111827;
+}
+
+/* --- Form Styling --- */
+form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="file"],
+form textarea,
+form select {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+form input:focus,
+form textarea:focus,
+form select:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+form button[type="submit"] {
+    background-color: #10b981;
+    color: white;
+    width: 100%;
+}
+
+form button[type="submit"]:hover {
+    background-color: #059669;
+}
+
+/* --- Table Styling --- */
+.category-title {
+    margin-top: 40px;
+    color: #1f2937;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 5px;
+}
+
+.category-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.category-table th,
+.category-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.category-table th {
+    background-color: #f3f4f6;
+    color: #111827;
+    font-weight: 600;
+}
+
+.category-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.category-table img {
+    max-width: 80px;
+    max-height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+/* --- Action Buttons --- */
+.action-buttons button {
+    margin-right: 5px;
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+.btn-view {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #2563eb;
+}
+
+.btn-edit {
+    background-color: #fbbf24;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #f59e0b;
+}
+
+.btn-delete {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #b91c1c;
+}

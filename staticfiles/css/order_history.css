@@ -1,0 +1,166 @@
+/* order_history.css */
+
+/* --- General Container --- */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #1f2937;
+}
+
+/* --- Headings --- */
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(90deg, #f43f5e, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- Search Bar --- */
+form input[type="text"] {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    transition: all 0.3s ease;
+}
+
+form input[type="text"]:focus {
+    outline: none;
+    border-color: #ec4899;
+    box-shadow: 0 0 5px rgba(236,72,153,0.5);
+}
+
+form button {
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    background: linear-gradient(90deg, #f43f5e, #ec4899);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+form button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(236,72,153,0.4);
+}
+
+/* --- Table Styles --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+thead {
+    background: linear-gradient(90deg, #fef2f2, #fee2e2);
+}
+
+thead th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #fef2f2;
+}
+
+tbody tr:hover {
+    background-color: #fee2e2;
+    transition: background-color 0.3s ease;
+}
+
+/* --- Status Badges --- */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+.status-pending { background-color: #facc15; }
+.status-completed { background-color: #10b981; }
+.status-cancelled { background-color: #ef4444; }
+
+/* --- Action Buttons --- */
+td form button {
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+td form button:hover {
+    color: #b91c1c;
+}
+
+/* --- Images --- */
+tbody img {
+    max-width: 80px;
+    max-height: 60px;
+    object-fit: cover;
+    border-radius: 0.25rem;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 768px) {
+    thead { display: none; }
+    tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        background: #fff;
+    }
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+    tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+    }
+    tbody img {
+        max-width: 60px;
+        max-height: 50px;
+    }
+}

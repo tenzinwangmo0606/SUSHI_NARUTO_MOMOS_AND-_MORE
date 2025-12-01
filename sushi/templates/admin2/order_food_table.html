@@ -1,8 +1,19 @@
 {% extends "admin2/base2.html" %}
+{% load static %}
 {% block title %}Order Details{% endblock %}
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <h2 class="text-2xl font-bold mb-4">Order Details</h2>
+
+    <!-- Pending orders persistent banner (hidden when 0) -->
+    <div id="pending-alert-banner"
+        class="hidden mb-4 p-3 rounded text-sm bg-yellow-100 border border-yellow-300 text-yellow-900 flex items-center justify-between">
+        <div id="pending-alert-text"><!-- content injected by JS --></div>
+        <div class="ml-4">
+            <button id="pending-ok-btn" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm">OK</button>
+        </div>
+    </div>
+
     <table class="min-w-full bg-white border">
         <thead>
             <tr>
@@ -21,46 +32,59 @@
         {% regroup orders by email as order_groups %}
         <tbody id="order-food-tbody">
             {% for group in order_groups %}
-                <!-- Group header: shows email, item count and "One-time Order" label -->
-                <tr class="bg-gray-100">
-                    <td class="px-4 py-2 border font-semibold" colspan="9">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <span class="mr-2">Email:</span>
-                                <strong>{{ group.grouper }}</strong>
-                                <span class="mx-2 text-sm text-gray-600">({{ group.list|length }} item{% if group.list|length > 1 %}s{% endif %})</span>
-                            </div>
-                            <div class="text-sm text-gray-600">One-time Order</div>
+            <!-- Group header: shows email, item count and "One-time Order" label -->
+            <tr class="bg-gray-100">
+                <td class="px-4 py-2 border font-semibold" colspan="9">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="mr-2">Email:</span>
+                            <strong>{{ group.grouper }}</strong>
+                            <span class="mx-2 text-sm text-gray-600">
+                                ({{ group.list|length }} item{% if group.list|length > 1 %}s{% endif %})
+                            </span>
+
                         </div>
-                    </td>
-                </tr>
-                <!-- Orders for this email -->
-                {% for order in group.list %}
-                <tr>
-                    <td class="px-4 py-2 border">{{ forloop.counter }}</td>
-                    <td class="px-4 py-2 border" x-text="">{{ order.item }}</td>
-                    <td class="px-4 py-2 border">{{ order.mobile }}</td>
-                    <td class="px-4 py-2 border">{{ order.qty }}</td>
-                    <td class="px-4 py-2 border">{{ order.price|floatformat:2 }} CHF</td>
-                    <td class="px-4 py-2 border">{{ order.total_price|floatformat:2 }} CHF</td>
-                    <td class="px-4 py-2 border">{{ order.created_at|date:"Y-m-d" }}</td>
-                    <td class="px-4 py-2 border">{{ order.created_at|time:"H:i:s" }}</td>
-                    <td id="status-{{ order.id }}" class="px-4 py-2 border {% if order.status == 'Accepted' %}bg-green-100{% elif order.status == 'Making' %}bg-yellow-100{% elif order.status == 'Ready to Collect' %}bg-blue-100{% elif order.status == 'Delivered' %}bg-purple-100{% elif order.status == 'Cancelled' %}bg-red-100{% endif %}">
-                        {{ order.status }}
-                    </td>
-                    <td class="px-4 py-2 border">
-                        <form method="post" action="{% url 'order_action_admin' order.id %}" class="inline order-action-form" data-order-id="{{ order.id }}">
-                            {% csrf_token %}
-                            <input type="hidden" name="reason" class="cancel-reason-input">
-                            <button type="submit" name="action" value="accept" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept Order</button>
-                            <button type="submit" name="action" value="making" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Making Order</button>
-                            <button type="submit" name="action" value="collect" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Collect the Order</button>
-                            <button type="submit" name="action" value="delivered" class="bg-purple-500 text-white px-2 py-1 rounded text-xs" onclick="return confirm('Are you sure you want to deliver this order?');">Deliver Order</button>
-                            <button type="submit" name="action" value="cancel" class="bg-red-500 text-white px-2 py-1 rounded text-xs cancel-btn">Cancel Order</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
+                        <div class="text-sm text-gray-600">One-time Order</div>
+                    </div>
+                </td>
+            </tr>
+            <!-- Orders for this email -->
+            {% for order in group.list %}
+            <tr>
+                <td class="px-4 py-2 border">{{ forloop.counter }}</td>
+                <td class="px-4 py-2 border" x-text="">{{ order.item }}</td>
+                <td class="px-4 py-2 border">{{ order.mobile }}</td>
+                <td class="px-4 py-2 border">{{ order.qty }}</td>
+                <td class="px-4 py-2 border">{{ order.price|floatformat:2 }} CHF</td>
+                <td class="px-4 py-2 border">{{ order.total_price|floatformat:2 }} CHF</td>
+                <td class="px-4 py-2 border">{{ order.created_at|date:"Y-m-d" }}</td>
+                <td class="px-4 py-2 border">{{ order.created_at|time:"H:i:s" }}</td>
+                <td id="status-{{ order.id }}"
+                    class="status-cell px-4 py-2 border {% if order.status == 'Accepted' %}bg-green-100{% elif order.status == 'Making' %}bg-yellow-100{% elif order.status == 'Ready to Collect' %}bg-blue-100{% elif order.status == 'Delivered' %}bg-purple-100{% elif order.status == 'Cancelled' %}bg-red-100{% endif %}"
+                    data-status="{{ order.status }}">
+                    {{ order.status }}
+                </td>
+                <td class="px-4 py-2 border">
+                    <form method="post" action="{% url 'order_action_admin' order.id %}"
+                        class="inline order-action-form" data-order-id="{{ order.id }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="reason" class="cancel-reason-input">
+                        <button type="submit" name="action" value="accept"
+                            class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept Order</button>
+                        <button type="submit" name="action" value="making"
+                            class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Making Order</button>
+                        <button type="submit" name="action" value="collect"
+                            class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Collect the Order</button>
+                        <button type="submit" name="action" value="delivered"
+                            class="bg-purple-500 text-white px-2 py-1 rounded text-xs"
+                            onclick="return confirm('Are you sure you want to deliver this order?');">Deliver
+                            Order</button>
+                        <button type="submit" name="action" value="cancel"
+                            class="bg-red-500 text-white px-2 py-1 rounded text-xs cancel-btn">Cancel Order</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
             {% endfor %}
         </tbody>
     </table>
@@ -70,7 +94,8 @@
 <div id="cancel-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-xl w-1/3">
         <h3 class="text-lg font-bold mb-4">Reason for Cancellation</h3>
-        <textarea id="cancel-reason-textarea" class="w-full p-2 border rounded" rows="4" placeholder="Please provide a reason..."></textarea>
+        <textarea id="cancel-reason-textarea" class="w-full p-2 border rounded" rows="4"
+            placeholder="Please provide a reason..."></textarea>
         <div class="mt-4 flex justify-end space-x-2">
             <button id="modal-cancel-btn" class="bg-gray-500 text-white px-4 py-2 rounded">Go Back</button>
             <button id="modal-confirm-btn" class="bg-red-500 text-white px-4 py-2 rounded">Confirm Cancellation</button>
@@ -78,13 +103,25 @@
     </div>
 </div>
 
+<!-- Audio element for pending order alert sound -->
+<audio id="pending-beep-audio" preload="auto" playsinline>
+    <source src="{% static 'sounds/beep.mp3' %}" type="audio/mpeg">
+</audio>
+
+
+<!-- Load Firebase compat SDKs (works with firebase.initializeApp / firebase.messaging usage below).
+     Using compat avoids "Unexpected token 'export'" and "Cannot use import statement outside a module" errors
+     caused by loading modular (ESM) SDK files as classic scripts. -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+
 <script>
     // Refresh page every 30 seconds
-    setInterval(function(){
+    setInterval(function () {
         window.location.reload();
     }, 30000); // 30 seconds
 
-    // Initialize Firebase
+    // Initialize Firebase config (templated values)
     const firebaseConfig = {
         apiKey: "{{ FIREBASE_API_KEY }}",
         projectId: "{{ FIREBASE_PROJECT_ID }}",
@@ -92,8 +129,37 @@
         appId: "{{ FIREBASE_APP_ID }}"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+    // Helper: check config appears valid (not empty and not unreplaced template placeholders)
+    function isFirebaseConfigValid(cfg) {
+        const vals = [cfg.apiKey, cfg.projectId, cfg.messagingSenderId, cfg.appId];
+        return vals.every(v => typeof v === 'string' && v.trim() !== '' && !v.includes('{{'));
+    }
+
+    // Safely initialize Firebase (compat). Guard against missing SDK, double-init or incomplete config.
+    let messaging = null;
+    try {
+        if (typeof firebase === 'undefined') {
+            console.warn('Firebase SDK not loaded. Push notifications will be disabled.');
+        } else if (!isFirebaseConfigValid(firebaseConfig)) {
+            console.warn('Incomplete Firebase config — skipping Firebase initialization (missing projectId/apiKey/etc).');
+        } else {
+            // avoid re-initializing if already initialized elsewhere
+            if (!firebase.apps || firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                console.info('Firebase already initialized.');
+            }
+
+            // Only attempt to get messaging when app config is present
+            try {
+                messaging = firebase.messaging();
+            } catch (mErr) {
+                console.warn('firebase.messaging() failed:', mErr);
+            }
+        }
+    } catch (err) {
+        console.error('Firebase initialization error:', err);
+    }
 
     // Configure Toastr
     toastr.options = {
@@ -121,13 +187,13 @@
 
     // Handle form submissions
     document.querySelectorAll('.order-action-form').forEach(form => {
-        form.addEventListener('submit', async function(e) {
+        form.addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             const action = formData.get('action');
             const orderId = this.dataset.orderId;
-            
+
             try {
                 const response = await fetch(this.action, {
                     method: 'POST',
@@ -138,25 +204,28 @@
                         'X-CSRFToken': CSRFTOKEN
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Show toast notification
                     toastr.success(data.message);
-                    
+
                     // Update status cell
                     const statusCell = document.getElementById(`status-${orderId}`);
                     if (statusCell) {
                         statusCell.textContent = data.new_status;
                         updateStatusColor(statusCell, data.new_status);
                     }
-                    
+
                     // Update navbar badge if order count changed
                     if (data.pending_count !== undefined) {
                         updateOrderBadge(data.pending_count);
+                        showPendingOrdersAlert(data.pending_count); // update banner + toast
+                    } else {
+                        showPendingOrdersAlert(); // fallback compute from DOM
                     }
-                    
+
                     // Refresh orders table
                     refreshTbody('order-food-tbody');
                 } else {
@@ -206,20 +275,20 @@
 
         document.querySelectorAll('.cancel-btn').forEach(button => {
             button.removeAttribute('onclick');
-            button.addEventListener('click', function(event) {
+            button.addEventListener('click', function (event) {
                 event.preventDefault();
                 activeForm = button.closest('form');
                 freshModal.style.display = 'flex';
             });
         });
 
-        freshCancel.addEventListener('click', function() {
+        freshCancel.addEventListener('click', function () {
             freshModal.style.display = 'none';
             freshTextarea.value = '';
         });
 
         // Use AJAX for confirm so CSRF header is included
-        freshConfirm.addEventListener('click', async function() {
+        freshConfirm.addEventListener('click', async function () {
             if (!activeForm) return;
             const url = activeForm.action;
             const fd = new FormData(activeForm);
@@ -245,7 +314,12 @@
                         statusCell.textContent = data.new_status;
                         updateStatusColor(statusCell, data.new_status);
                     }
-                    if (data.pending_count !== undefined) updateOrderBadge(data.pending_count);
+                    if (data.pending_count !== undefined) {
+                        updateOrderBadge(data.pending_count);
+                        showPendingOrdersAlert(data.pending_count);
+                    } else {
+                        showPendingOrdersAlert();
+                    }
                     refreshTbody('order-food-tbody');
                     freshModal.style.display = 'none';
                     freshTextarea.value = '';
@@ -258,7 +332,7 @@
             }
         });
 
-        freshModal.addEventListener('click', function(event) {
+        freshModal.addEventListener('click', function (event) {
             if (event.target === freshModal) {
                 freshModal.style.display = 'none';
                 freshTextarea.value = '';
@@ -269,7 +343,7 @@
     // Replace tbody by fetching current page and extracting tbody#order-food-tbody
     async function refreshTbody(tbodyId) {
         try {
-            const res = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+            const res = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             if (!res.ok) return;
             const html = await res.text();
             const parser = new DOMParser();
@@ -281,6 +355,8 @@
                     current.innerHTML = newTbody.innerHTML;
                     // re-initialize behaviour for dynamic parts (modal buttons etc.)
                     initCancelModal();
+                    // refresh pending banner based on new DOM
+                    showPendingOrdersAlert();
                 }
             }
         } catch (e) {
@@ -289,6 +365,14 @@
     }
 
     function startRealtimeOrders() {
+        // If running on local development hosts, avoid opening a WebSocket (browser will log connection failures).
+        const localHosts = ['127.0.0.1', 'localhost'];
+        if (localHosts.includes(location.hostname)) {
+            // Use polling fallback only (silent - no console output)
+            setInterval(() => refreshTbody('order-food-tbody'), 5000);
+            return;
+        }
+
         const wsProtocol = (location.protocol === 'https:') ? 'wss:' : 'ws:';
         const wsUrl = wsProtocol + '//' + location.host + '/ws/admin/orders/';
         let socket;
@@ -308,9 +392,103 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Helper: try to play beep (no error thrown)
+    function tryPlayBeep() {
+        const beepAudio = document.getElementById('pending-beep-audio');
+        if (!beepAudio) return;
+        try {
+            beepAudio.volume = 0.6;
+            beepAudio.currentTime = 0;
+            beepAudio.play().catch(err => {
+                console.warn('Audio play failed (may require user gesture):', err);
+            });
+        } catch (err) {
+            console.warn('Beep play error:', err);
+        }
+    }
+
+    // New: timer handle for delayed beep and helper to stop/cleanup
+    let pendingBeepTimer = null;
+    function stopPendingBeep() {
+        const beepAudio = document.getElementById('pending-beep-audio');
+        if (pendingBeepTimer) {
+            clearTimeout(pendingBeepTimer);
+            pendingBeepTimer = null;
+        }
+        if (beepAudio) {
+            try {
+                beepAudio.pause();
+                beepAudio.currentTime = 0;
+                beepAudio.loop = false;
+            } catch (e) {
+                console.warn('Failed to stop beep:', e);
+            }
+        }
+    }
+
+    // Show pending orders count in a toastr alert AND update the persistent banner.
+    function showPendingOrdersAlert(count) {
+        let pendingCount = typeof count === 'number' ? count : null;
+        if (pendingCount === null) {
+            const statusCells = document.querySelectorAll('.status-cell');
+            pendingCount = 0;
+            statusCells.forEach(cell => {
+                const text = (cell.textContent || cell.innerText || '').trim().toLowerCase();
+                if (text === 'pending') pendingCount += 1;
+            });
+        }
+
+        const banner = document.getElementById('pending-alert-banner');
+        const bannerText = document.getElementById('pending-alert-text');
+        const okBtn = document.getElementById('pending-ok-btn');
+        const beepAudio = document.getElementById('pending-beep-audio');
+
+        // ensure OK button has a fresh listener (remove previous)
+        if (okBtn && okBtn.parentNode) {
+            const newOk = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOk, okBtn);
+        }
+
+        const freshOkBtn = document.getElementById('pending-ok-btn');
+
+        if (pendingCount > 0) {
+            toastr.info(`${pendingCount} pending order${pendingCount > 1 ? 's' : ''}`, 'Pending Orders');
+
+            if (bannerText) bannerText.textContent = `${pendingCount} pending order${pendingCount > 1 ? 's' : ''} — please review.`;
+            banner.classList.remove('hidden');
+
+            // start beep after 1 second, loop until user clicks OK
+            if (beepAudio) {
+                stopPendingBeep();
+                pendingBeepTimer = setTimeout(() => {
+                    beepAudio.loop = true;
+                    tryPlayBeep();
+                }, 1000);
+            }
+
+            // when OK clicked stop beep and hide banner
+            if (freshOkBtn) {
+                freshOkBtn.addEventListener('click', function () {
+                    stopPendingBeep();
+                    banner.classList.add('hidden');
+                });
+            }
+
+        } else {
+            // no pending orders -> hide banner and stop audio
+            stopPendingBeep();
+            banner.classList.add('hidden');
+            if (bannerText) bannerText.textContent = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
         initCancelModal();
         startRealtimeOrders();
+
+        // NOTE: Removed auto-start of background music on page load to respect autoplay/user-gesture policies.
+        // showPendingOrdersAlert will start audio (after 1s) only when pending orders are detected.
+        showPendingOrdersAlert(); // display pending count on load
     });
 </script>
 {% endblock %}

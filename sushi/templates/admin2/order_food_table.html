@@ -32,6 +32,7 @@
         {% regroup orders by email as order_groups %}
         <tbody id="order-food-tbody">
             {% for group in order_groups %}
+<<<<<<< HEAD
             <!-- Group header: shows email, item count and "One-time Order" label -->
             <tr class="bg-gray-100">
                 <td class="px-4 py-2 border font-semibold" colspan="9">
@@ -85,6 +86,48 @@
                 </td>
             </tr>
             {% endfor %}
+=======
+                <!-- Group header: shows email, item count and "One-time Order" label -->
+                <tr class="bg-gray-100">
+                    <td class="px-4 py-2 border font-semibold" colspan="9">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="mr-2">Email:</span>
+                                <strong>{{ group.grouper }}</strong>
+                                <span class="mx-2 text-sm text-gray-600">({{ group.list|length }} item{% if group.list|length > 1 %}s{% endif %})</span>
+                            </div>
+                            <div class="text-sm text-gray-600">One-time Order</div>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Orders for this email -->
+                {% for order in group.list %}
+                <tr>
+                    <td class="px-4 py-2 border">{{ forloop.counter }}</td>
+                    <td class="px-4 py-2 border" x-text="">{{ order.item }}</td>
+                    <td class="px-4 py-2 border">{{ order.mobile }}</td>
+                    <td class="px-4 py-2 border">{{ order.qty }}</td>
+                    <td class="px-4 py-2 border">{{ order.price|floatformat:2 }} CHF</td>
+                    <td class="px-4 py-2 border">{{ order.total_price|floatformat:2 }} CHF</td>
+                    <td class="px-4 py-2 border">{{ order.created_at|date:"Y-m-d" }}</td>
+                    <td class="px-4 py-2 border">{{ order.created_at|time:"H:i:s" }}</td>
+                    <td id="status-{{ order.id }}" class="px-4 py-2 border {% if order.status == 'Accepted' %}bg-green-100{% elif order.status == 'Making' %}bg-yellow-100{% elif order.status == 'Ready to Collect' %}bg-blue-100{% elif order.status == 'Delivered' %}bg-purple-100{% elif order.status == 'Cancelled' %}bg-red-100{% endif %}">
+                        {{ order.status }}
+                    </td>
+                    <td class="px-4 py-2 border">
+                        <form method="post" action="{% url 'order_action_admin' order.id %}" class="inline order-action-form" data-order-id="{{ order.id }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="reason" class="cancel-reason-input">
+                            <button type="submit" name="action" value="accept" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept Order</button>
+                            <button type="submit" name="action" value="making" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Making Order</button>
+                            <button type="submit" name="action" value="collect" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Collect the Order</button>
+                            <button type="submit" name="action" value="delivered" class="bg-purple-500 text-white px-2 py-1 rounded text-xs" onclick="return confirm('Are you sure you want to deliver this order?');">Deliver Order</button>
+                            <button type="submit" name="action" value="cancel" class="bg-red-500 text-white px-2 py-1 rounded text-xs cancel-btn">Cancel Order</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
             {% endfor %}
         </tbody>
     </table>
@@ -288,7 +331,11 @@
         });
 
         // Use AJAX for confirm so CSRF header is included
+<<<<<<< HEAD
         freshConfirm.addEventListener('click', async function () {
+=======
+        freshConfirm.addEventListener('click', async function() {
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
             if (!activeForm) return;
             const url = activeForm.action;
             const fd = new FormData(activeForm);
@@ -314,12 +361,16 @@
                         statusCell.textContent = data.new_status;
                         updateStatusColor(statusCell, data.new_status);
                     }
+<<<<<<< HEAD
                     if (data.pending_count !== undefined) {
                         updateOrderBadge(data.pending_count);
                         showPendingOrdersAlert(data.pending_count);
                     } else {
                         showPendingOrdersAlert();
                     }
+=======
+                    if (data.pending_count !== undefined) updateOrderBadge(data.pending_count);
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
                     refreshTbody('order-food-tbody');
                     freshModal.style.display = 'none';
                     freshTextarea.value = '';

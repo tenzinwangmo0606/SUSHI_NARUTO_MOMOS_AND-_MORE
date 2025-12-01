@@ -27,6 +27,7 @@ from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 def send_new_email(to,cc=[],bcc=[],subject="",content=""):
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key['api-key'] = settings.BREVO_API_KEY
@@ -50,6 +51,8 @@ def send_new_email(to,cc=[],bcc=[],subject="",content=""):
 
 
 
+=======
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
 # ---------------- Public Views ----------------
 
 def home(request):
@@ -1380,3 +1383,116 @@ def cookies_view(request):
 
 
 
+<<<<<<< HEAD
+=======
+    return JsonResponse({
+        'success': True,
+        'status': order.status,
+        'email_sent': email_sent,
+        'fcm_sent': fcm_sent,
+        'message': f'Order {order.id} updated to {order.status}'
+    })
+
+from django.core.mail import send_mail
+from django.http import JsonResponse
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
+def send_order_confirmation_emails(order_id, customer_email):
+    """
+    Send order confirmation emails to customer and manager.
+    """
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        # Email to customer
+        customer_subject = "Order Successfully Placed!"
+        customer_message = f"""
+Dear Customer,
+
+Your order has been successfully placed!
+
+Order Details:
+- Order ID: {order.id}
+- Item: {order.item}
+- Quantity: {order.qty}
+- Total Price: {order.total_price} CHF
+
+Thank you for your order. We will start preparing it soon.
+
+Best regards,
+Sushi Restaurant
+        """
+        
+        # Email to manager
+        manager_subject = "New Order Received!"
+        manager_message = f"""
+Hello Manager,
+
+A new order has been received.
+
+Order Details:
+- Order ID: {order.id}
+- Customer Email: {customer_email}
+- Mobile: {order.mobile}
+- Item: {order.item}
+- Quantity: {order.qty}
+- Total Price: {order.total_price} CHF
+- Status: {order.status}
+
+Please process this order accordingly.
+
+Best regards,
+Order System
+        """
+        
+        from_email = settings.DEFAULT_FROM_EMAIL
+        
+        # Send email to customer
+        send_mail(
+            customer_subject,
+            customer_message,
+            from_email,
+            [customer_email],
+            fail_silently=False
+        )
+        
+        # Send email to manager
+        send_mail(
+            manager_subject,
+            manager_message,
+            from_email,
+            [settings.MANAGER_EMAIL],
+            fail_silently=False
+        )
+        
+        return True
+    except Exception as e:
+        logger.exception("Failed to send order confirmation emails for order %s", order_id)
+        return False
+
+
+@require_http_methods(["POST"])
+def send_order_emails(request):
+    """
+    API endpoint to send order confirmation emails.
+    Called from cart.html after successful order placement.
+    """
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            order_id = data.get('order_id')
+            customer_email = data.get('customer_email')
+            
+            if send_order_confirmation_emails(order_id, customer_email):
+                return JsonResponse({'success': True, 'message': 'Emails sent successfully'})
+            else:
+                return JsonResponse({'success': False, 'message': 'Failed to send emails'}, status=500)
+        except Exception as e:
+            logger.exception("Error in send_order_emails")
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)

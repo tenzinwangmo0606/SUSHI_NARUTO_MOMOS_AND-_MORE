@@ -75,6 +75,7 @@ urlpatterns = [
     path('admin2/reservations/<int:pk>/delete/', views.delete_reservation, name='delete_reservation'),
     path('admin2/reservations/<int:pk>/send-email/<str:mail_type>/', views.send_confirmation_email, name='send_confirmation_email'),
     # In urls.py
+<<<<<<< HEAD
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('api/dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
     path('send-order-emails/', views.send_order_emails, name='send_order_emails'),
@@ -84,6 +85,12 @@ urlpatterns = [
     path('privacy/', views.privacy_view, name='privacy'),
     path('terms/', views.terms_view, name='terms'),
     path('cookies/', views.cookies_view, name='cookies'),
+=======
+path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+path('api/dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
+
+    path('send-order-emails/', views.send_order_emails, name='send_order_emails'),
+>>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
 ]
 
 if settings.DEBUG:

@@ -13,7 +13,6 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
-    # path('adminmanage/', views.admin_manage, name='admin_manage'),
 
     # ----------- Admin Routes -----------
     path('admin2/', views.admin2_login, name='admin2_login'),
@@ -21,8 +20,8 @@ urlpatterns = [
     path('dashboard/login/', views.admin_login, name='admin_login'),
 
     # --- Menu Items ---
-    path('menuitems/', views.menuitem_list, name='menuitem_list'),       # List all
-    path('menuitems/add/', views.menuitem_add, name='menuitem_add'),     # Add new
+    path('menuitems/', views.menuitem_list, name='menuitem_list'),
+    path('menuitems/add/', views.menuitem_add, name='menuitem_add'),
     path('menuitems/<int:pk>/view/', views.menuitem_view, name='menuitem_view'),
     path('menuitems/<int:pk>/edit/', views.menuitem_edit, name='menuitem_edit'),
     path('menuitems/<int:pk>/update/', views.menuitem_update, name='menuitem_update'),
@@ -57,15 +56,12 @@ urlpatterns = [
     path('api/search_menu_items/', views.search_menu_items_api, name='search_menu_items_api'),
     path('api/dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
     path('api/dashboard/data/', views.dashboard_data, name='dashboard_data'),
-    # path('api/orders/<int:order_id>/status/', views.api_update_order_status, name='api_update_order_status'),
 
     # --- Dashboard ---
     path('dashboard/', views.dashboard, name='dashboard'),
-
-    # New: cart page
     path('cart/', views.cart_page, name='cart'),
 
-    # ----------- Admin 2 Routes -----------
+    # --- Admin 2 Routes ---
     path('admin2/contacts/', views.admin_contact_list, name='admin_contact_list'),
     path('admin2/contacts/<int:pk>/', views.admin_contact_detail, name='admin_contact_detail'),
     path('admin2/contacts/<int:pk>/delete/', views.admin_contact_delete, name='admin_contact_delete'),
@@ -74,23 +70,13 @@ urlpatterns = [
     path('admin2/reservations/<int:pk>/view/', views.view_reservation, name='view_reservation'),
     path('admin2/reservations/<int:pk>/delete/', views.delete_reservation, name='delete_reservation'),
     path('admin2/reservations/<int:pk>/send-email/<str:mail_type>/', views.send_confirmation_email, name='send_confirmation_email'),
-    # In urls.py
-<<<<<<< HEAD
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('api/dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
     path('send-order-emails/', views.send_order_emails, name='send_order_emails'),
-    path('send_new_email', views.send_new_email, name='send_new_email'),
 
     # --- Static Pages ---
     path('privacy/', views.privacy_view, name='privacy'),
     path('terms/', views.terms_view, name='terms'),
     path('cookies/', views.cookies_view, name='cookies'),
-=======
-path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-path('api/dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
-
-    path('send-order-emails/', views.send_order_emails, name='send_order_emails'),
->>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
 ]
 
 if settings.DEBUG:

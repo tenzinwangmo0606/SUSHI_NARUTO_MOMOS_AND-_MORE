@@ -24,11 +24,12 @@ from sib_api_v3_sdk.rest import ApiException
 from .models import MenuCategory, MenuItem, SpecialMenu, Order, CustomUser, Contact, TableReservation
 from .forms import MenuItemForm, SpecialMenuForm
 from django.db.models import Q
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-def send_new_email(to,cc=[],bcc=[],subject="",content=""):
+def send_new_email(to, cc=[], bcc=[], subject="", content=""):
+    """Send email via Brevo API"""
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key['api-key'] = settings.BREVO_API_KEY
 
@@ -39,8 +40,6 @@ def send_new_email(to,cc=[],bcc=[],subject="",content=""):
 
     send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
         to=to,
-        # cc=cc,
-        # bcc=bcc,
         html_content=content,
         sender=sender,
         subject=subject,
@@ -48,11 +47,6 @@ def send_new_email(to,cc=[],bcc=[],subject="",content=""):
     api_response = api_instance.send_transac_email(send_smtp_email)
     return True
 
-
-
-
-=======
->>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
 # ---------------- Public Views ----------------
 
 def home(request):
@@ -455,20 +449,15 @@ def order_submit(request):
       - cart: [ {name, price, qty}, ... ]  (JSON array)
       - single item: item, price, qty, mobile, address, delivery, orderType
     For guest users, an 'email' field is required.
-    On success:
-      - For JSON requests: returns JsonResponse with created order ids
-      - For form POSTs: stores created ids in session['last_order_ids'] and redirects to cart_page
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
-    # Try parse JSON body first, otherwise fall back to form data
     data = {}
     try:
         body = request.body.decode('utf-8') or '{}'
         data = json.loads(body)
     except Exception:
-        # If not JSON, attempt to use POST form data
         data = request.POST.dict()
 
     email = data.get('email') or request.POST.get('email')
@@ -590,35 +579,14 @@ def order_submit(request):
     """
 
     try:
-        manager = [{"email":"info.sushinaruto@gmail.com" }]  #settings.ORDER_MANAGER_EMAIL
+        manager = [{"email": "info.sushinaruto@gmail.com"}]
         send_new_email(to=manager, subject="New Order Received", content=message)
-        print(order.email)
-        customer = [{"email": order.email}]
+        customer = [{"email": email}]
         send_new_email(to=customer, subject="Your Order Confirmation - Sushi Naruto", content=message)
     except Exception:
         logger.exception("Email Sending Error")
 
     return JsonResponse({'success': True, 'order_ids': created_ids})
-
-
-
-
-
-
-    
-    
-import logging
-from django.http import JsonResponse
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from .models import Order
-
-
-
-
 
 @login_required
 def order_action(request, order_id):
@@ -646,7 +614,6 @@ def order_action(request, order_id):
 @login_required
 def order_action_admin(request, order_id):
     try:
-        # Permission check
         if not request.user.is_staff and getattr(request.user, "user_type", None) != "management":
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
@@ -658,19 +625,13 @@ def order_action_admin(request, order_id):
             action = request.POST.get('action')
             reason = request.POST.get('reason', '')
 
-            # ---------- Base HTML Template ----------
             def build_html(body_title, extra_message=""):
                 return f"""
                 <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8f8f8;">
-                
                     <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto;">
-                        
                         <h2 style="color: #d81b60; text-align:center;">{body_title}</h2>
-
                         <p>{extra_message}</p>
-
                         <h3 style="margin-top: 20px;">Order Details</h3>
-
                         <div style="border: 1px solid #ddd; padding: 15px; border-radius: 6px; background:#fafafa;">
                             <p><strong>Order ID:</strong> #{order.id}</p>
                             <p><strong>Item:</strong> {order.item}</p>
@@ -681,77 +642,46 @@ def order_action_admin(request, order_id):
                             <p><strong>Address:</strong> {order.address}</p>
                             <p><strong>Mobile:</strong> {order.mobile}</p>
                         </div>
-
                         <p style="margin-top: 25px;">
                             Thank you for ordering with <strong>Sushi Naruto Momos</strong>.
                         </p>
-
                     </div>
                 </div>
                 """
 
-            # ---------- Subject + HTML Body ----------
             if action == "accept":
                 subject = "Order Accepted"
-                html_body = build_html(
-                    "Your Order Has Been Accepted",
-                    "Good news! Your order has been accepted and will be prepared soon."
-                )
+                html_body = build_html("Your Order Has Been Accepted", "Good news! Your order has been accepted and will be prepared soon.")
                 order.status = "Accepted"
-
             elif action == "making":
                 subject = "Order Being Prepared"
-                html_body = build_html(
-                    "We Are Preparing Your Order",
-                    "Your order is currently being prepared by our chef."
-                )
+                html_body = build_html("We Are Preparing Your Order", "Your order is currently being prepared by our chef.")
                 order.status = "Making"
-
             elif action == "collect":
                 subject = "Order Ready to Collect"
-                html_body = build_html(
-                    "Your Order is Ready for Pickup",
-                    "Please come to the restaurant to collect your order."
-                )
+                html_body = build_html("Your Order is Ready for Pickup", "Please come to the restaurant to collect your order.")
                 order.status = "Ready to Collect"
-
             elif action == "delivered":
                 subject = "Order Delivered"
-                html_body = build_html(
-                    "Your Order Has Been Delivered",
-                    "Enjoy your meal! Thank you for choosing us."
-                )
+                html_body = build_html("Your Order Has Been Delivered", "Enjoy your meal! Thank you for choosing us.")
                 order.status = "Delivered"
-
             elif action == "cancel":
                 subject = "Order Cancelled"
                 msg = f"Reason: {reason}" if reason else "Your order has been cancelled."
-                html_body = build_html(
-                    "Order Cancelled",
-                    msg
-                )
+                html_body = build_html("Order Cancelled", msg)
                 order.status = "Cancelled"
-
             else:
                 return
 
-            # ---------- Send the Email via Resend ----------
-            # try:
-            print('order.email', order.email)
-            print(html_body)
-            to = [{"email":order.email}]
-            send_new_email(to,cc=[],bcc=[],subject=subject,content=html_body)
+            try:
+                to = [{"email": order.email}]
+                send_new_email(to, subject=subject, content=html_body)
+            except Exception as mail_error:
+                logger.exception(f"Mail send failed: {mail_error}")
 
-            # except Exception as mail_error:
-            #     logging.exception(f"Mail send failed: {mail_error}")
-                
-            # Save DB Status
             order.save()
-
-            # Updated pending count
             pending_count = Order.objects.filter(status__in=['Accepted', 'Making']).count()
 
-            # AJAX response
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
@@ -763,7 +693,6 @@ def order_action_admin(request, order_id):
             messages.success(request, f'Order {action}ed successfully')
             return redirect('order_food_table')
 
-        # Invalid method
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'message': 'Invalid method'}, status=405)
 
@@ -785,10 +714,33 @@ def order_history(request):
 
 @login_required
 def order_detail(request, pk):
-    order = Order.objects.get(pk=pk, email=request.user.email)
-    return render(request, 'order_detail.html', {'order': order})
+    try:
+        if request.user.is_staff:
+            order = get_object_or_404(Order, pk=pk)
+        else:
+            order = get_object_or_404(Order, pk=pk, email=request.user.email)
 
-# Alias for URL compatibility
+        try:
+            menu_item = MenuItem.objects.get(name=order.item)
+            item_image = menu_item.image
+        except MenuItem.DoesNotExist:
+            item_image = None
+
+        context = {
+            'order': order,
+            'item_image': item_image,
+            'status_class': get_status_class(order.status),
+            'can_cancel': order.status in ['pending', 'Accepted'],
+            'can_modify': request.user.is_staff,
+            'active_tab': 'orders'
+        }
+
+        return render(request, 'order_detail.html', context)
+
+    except Order.DoesNotExist:
+        messages.error(request, 'Order not found.')
+        return redirect('dashboard')
+
 order_details = order_detail
 
 @login_required
@@ -809,7 +761,7 @@ def order_live(request):
     pending_orders = Order.objects.filter(
         status__in=['pending', 'Accepted', 'Making', 'Ready to Collect']
     ).order_by('-created_at')
-    
+
     orders_with_items = []
     for order in pending_orders:
         try:
@@ -817,14 +769,14 @@ def order_live(request):
             image = menu_item.image
         except MenuItem.DoesNotExist:
             image = None
-        
+
         orders_with_items.append({
             'order': order,
             'image': image,
             'status_class': get_status_class(order.status),
             'created_at_formatted': order.created_at.strftime("%Y-%m-%d %H:%M:%S")
         })
-    
+
     return render(request, 'admin2/order_live.html', {
         'orders_with_items': orders_with_items,
         'active_tab': 'live_orders'
@@ -844,11 +796,11 @@ def get_status_class(status):
 def order_food_table(request):
     if not request.user.is_staff:
         return redirect('admin_login')
-        
+
     orders = Order.objects.exclude(
         status__in=['Delivered', 'Cancelled']
     ).order_by('-created_at')
-    
+
     return render(request, 'admin2/order_food_table.html', {
         'orders': orders,
         'active_tab': 'food_orders'
@@ -858,22 +810,20 @@ def manage_order_history(request):
     if not request.user.is_staff:
         return redirect('admin_login')
 
-    # Add status filter
     status_filter = request.GET.get('status', '')
     date_filter = request.GET.get('date', '')
-    
+
     orders = Order.objects.all()
-    
+
     if status_filter:
         orders = orders.filter(status=status_filter)
     if date_filter:
         orders = orders.filter(created_at__date=date_filter)
-        
+
     orders = orders.order_by('-created_at')
-    
-    # Get unique statuses for filter dropdown
+
     all_statuses = Order.objects.values_list('status', flat=True).distinct()
-    
+
     return render(request, 'admin2/manage_order_history.html', {
         'orders': orders,
         'all_statuses': all_statuses,
@@ -881,45 +831,6 @@ def manage_order_history(request):
         'current_date': date_filter,
         'active_tab': 'order_history'
     })
-
-@login_required
-def order_detail(request, pk):
-    try:
-        if request.user.is_staff:
-            order = get_object_or_404(Order, pk=pk)
-        else:
-            order = get_object_or_404(Order, pk=pk, email=request.user.email)
-            
-        # Get associated menu item if exists
-        try:
-            menu_item = MenuItem.objects.get(name=order.item)
-            item_image = menu_item.image
-        except MenuItem.DoesNotExist:
-            item_image = None
-            
-        context = {
-            'order': order,
-            'item_image': item_image,
-            'status_class': get_status_class(order.status),
-            'can_cancel': order.status in ['pending', 'Accepted'],
-            'can_modify': request.user.is_staff,
-            'active_tab': 'orders'
-        }
-        
-        return render(request, 'order_detail.html', context)
-        
-    except Order.DoesNotExist:
-        messages.error(request, 'Order not found.')
-        return redirect('dashboard')
-
-# Make this the main order_details view
-order_details = order_detail
-
-# ---------------- API Views ----------------
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.db.models import Q
 
 @csrf_exempt
 def search_menu_items_api(request):
@@ -943,7 +854,6 @@ def search_menu_items_api(request):
             'name': item['name'],
             'description': item['description'],
             'image_url': image_url,
-            # Provide anchor that client can use to scroll: #menu-item-<id>
             'url': f'#menu-item-{item["id"]}'
         })
     return JsonResponse(results, safe=False)
@@ -970,7 +880,6 @@ def update_order_status(request, pk):
             order.status = status
             order.save()
 
-            # Send email notification
             subject = f'Your order #{order.id} has been {status}'
             message = f'Hi, your order for {order.item} has been {status}.'
             try:
@@ -981,24 +890,16 @@ def update_order_status(request, pk):
 
     return redirect('manage_order_history')
 
-# ---------------- API Views ----------------
-
 @login_required
 def admin_manage(request):
     """
     Management landing page for admin2 users.
     Ensures only staff or management users can access the admin manage page.
     """
-    # Allow access for staff or management user_type
     if not request.user.is_authenticated or not (request.user.is_staff or getattr(request.user, "user_type", None) == "management"):
         return redirect('admin2_login')
 
-    # Add any context metrics as needed later
     return render(request, 'admin2/adminmanage.html')
-
-
-# sushi/views.py
-from django.shortcuts import render
 
 @login_required
 def order_card_list(request):
@@ -1008,9 +909,9 @@ def order_card_list(request):
 @login_required
 def order_card_detail(request, pk):
     order = get_object_or_404(Order, pk=pk, email=request.user.email)
-    
+
     steps = ['pending', 'Accepted', 'Making', 'Ready to Collect', 'Delivered']
-    
+
     try:
         current_step_index = steps.index(order.status)
     except ValueError:
@@ -1022,7 +923,6 @@ def order_card_detail(request, pk):
         'current_step_index': current_step_index,
     }
     return render(request, 'order_card_detail.html', context)
-
 
 def cart_page(request):
     """
@@ -1036,13 +936,11 @@ def cart_page(request):
         last_orders = list(Order.objects.filter(id__in=last_ids).order_by('-created_at'))
     return render(request, 'cart.html', {'last_orders': last_orders})
 
-# ---------------- Admin Contact & Reservation Management ----------------
-
 @login_required
 def admin_contact_list(request):
     if not request.user.is_staff:
         return redirect('admin_login')
-    
+
     contacts = Contact.objects.all().order_by('-created_at')
     return render(request, 'admin2/contact_list.html', {
         'contacts': contacts,
@@ -1074,19 +972,18 @@ def admin_contact_delete(request, pk):
 def admin_reservations(request):
     if not request.user.is_staff:
         return redirect('admin_login')
-    
-    # Filter options
+
     date_filter = request.GET.get('date')
     status_filter = request.GET.get('status')
-    
+
     reservations = TableReservation.objects.all()
     if date_filter:
         reservations = reservations.filter(date=date_filter)
     if status_filter:
         reservations = reservations.filter(status=status_filter)
-        
+
     reservations = reservations.order_by('date', 'time')
-    
+
     return render(request, 'admin2/reservations.html', {
         'reservations': reservations,
         'active_tab': 'reservations'
@@ -1096,31 +993,30 @@ def admin_reservations(request):
 def update_reservation_status(request, pk):
     if not request.user.is_staff:
         return redirect('admin_login')
-        
+
     reservation = get_object_or_404(TableReservation, pk=pk)
     if request.method == 'POST':
         status = request.POST.get('status')
         if status in ['confirmed', 'cancelled']:
             reservation.status = status
             reservation.save()
-            
-            # Send email notification
+
             subject = f'Your table reservation for {reservation.date} has been {status}'
             message = f'Dear {reservation.name},\n\nYour table reservation for {reservation.date} at {reservation.time} has been {status}.'
             try:
                 send_mail(subject, message, 'saranvignesh55@gmail.com', [reservation.email])
             except Exception as e:
                 messages.error(request, f'Status updated but failed to send notification: {str(e)}')
-                
+
     return redirect('admin_reservations')
 
 @login_required
 def send_confirmation_email(request, pk, mail_type):
     if not request.user.is_staff:
         return redirect('admin_login')
-        
+
     reservation = get_object_or_404(TableReservation, pk=pk)
-    
+
     if mail_type == 'confirmed':
         subject = f'Your table reservation for {reservation.date} is confirmed'
         message = f'Dear {reservation.name},\n\nYour table reservation for {reservation.date} at {reservation.time} has been confirmed.'
@@ -1136,7 +1032,7 @@ def send_confirmation_email(request, pk, mail_type):
         messages.success(request, f'{mail_type.capitalize()} email sent to {reservation.email}.')
     except Exception as e:
         messages.error(request, f'Failed to send {mail_type} email: {str(e)}')
-            
+
     return redirect('admin_reservations')
 
 @login_required
@@ -1329,85 +1225,34 @@ def dashboard_data(request):
             'message': str(e)
         }, status=500)
 
-@login_required
-def admin_dashboard(request):
-    """Main dashboard view that renders the template"""
-    # Initial data load
-    order_summary = Order.dashboard_summary()
-    
-    context = {
-        'order_summary': order_summary,
-        'page_title': 'Admin Dashboard',
-        'debug_mode': True  # For development only
-    }
-    
-    return render(request, 'admin2/adminmanage.html', context)
-
 @require_http_methods(["POST"])
 def send_order_emails(request):
     """
     API endpoint to send order confirmation emails.
     Called from cart.html after successful order placement.
     """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            order_id = data.get('order_id')
-            customer_email = data.get('customer_email')
-            
-            if not order_id or not customer_email:
-                return JsonResponse({'success': False, 'message': 'Missing order_id or customer_email'}, status=400)
-            
-            send_order_confirmation_emails(order_id, customer_email)
-            return JsonResponse({'success': True, 'message': 'Confirmation emails queued for sending'})
-        except json.JSONDecodeError:
-            logger.warning("Invalid JSON in send_order_emails request")
-            return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
-        except Exception as e:
-            logger.exception("Error in send_order_emails")
-            return JsonResponse({'success': False, 'message': 'Internal server error'}, status=500)
-    
-    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        customer_email = data.get('customer_email')
 
+        if not order_id or not customer_email:
+            return JsonResponse({'success': False, 'message': 'Missing order_id or customer_email'}, status=400)
 
-def privacy_view(request):
-    return render(request, 'privacy.html')
-
-def terms_view(request):
-    return render(request, 'terms.html')
-
-def cookies_view(request):
-    # serves cookies1.html
-    return render(request, 'cookies1.html')
-
-
-
-
-<<<<<<< HEAD
-=======
-    return JsonResponse({
-        'success': True,
-        'status': order.status,
-        'email_sent': email_sent,
-        'fcm_sent': fcm_sent,
-        'message': f'Order {order.id} updated to {order.status}'
-    })
-
-from django.core.mail import send_mail
-from django.http import JsonResponse
-from django.conf import settings
-import logging
-
-logger = logging.getLogger(__name__)
+        send_order_confirmation_emails(order_id, customer_email)
+        return JsonResponse({'success': True, 'message': 'Confirmation emails queued for sending'})
+    except json.JSONDecodeError:
+        logger.warning("Invalid JSON in send_order_emails request")
+        return JsonResponse({'success': False, 'message': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.exception("Error in send_order_emails")
+        return JsonResponse({'success': False, 'message': 'Internal server error'}, status=500)
 
 def send_order_confirmation_emails(order_id, customer_email):
-    """
-    Send order confirmation emails to customer and manager.
-    """
+    """Send order confirmation emails to customer and manager."""
     try:
         order = Order.objects.get(id=order_id)
         
-        # Email to customer
         customer_subject = "Order Successfully Placed!"
         customer_message = f"""
 Dear Customer,
@@ -1426,7 +1271,6 @@ Best regards,
 Sushi Restaurant
         """
         
-        # Email to manager
         manager_subject = "New Order Received!"
         manager_message = f"""
 Hello Manager,
@@ -1450,7 +1294,6 @@ Order System
         
         from_email = settings.DEFAULT_FROM_EMAIL
         
-        # Send email to customer
         send_mail(
             customer_subject,
             customer_message,
@@ -1459,7 +1302,6 @@ Order System
             fail_silently=False
         )
         
-        # Send email to manager
         send_mail(
             manager_subject,
             manager_message,
@@ -1473,26 +1315,11 @@ Order System
         logger.exception("Failed to send order confirmation emails for order %s", order_id)
         return False
 
+def privacy_view(request):
+    return render(request, 'privacy.html')
 
-@require_http_methods(["POST"])
-def send_order_emails(request):
-    """
-    API endpoint to send order confirmation emails.
-    Called from cart.html after successful order placement.
-    """
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            order_id = data.get('order_id')
-            customer_email = data.get('customer_email')
-            
-            if send_order_confirmation_emails(order_id, customer_email):
-                return JsonResponse({'success': True, 'message': 'Emails sent successfully'})
-            else:
-                return JsonResponse({'success': False, 'message': 'Failed to send emails'}, status=500)
-        except Exception as e:
-            logger.exception("Error in send_order_emails")
-            return JsonResponse({'success': False, 'message': str(e)}, status=500)
-    
-    return JsonResponse({'success': False, 'message': 'Invalid request'}, status=400)
->>>>>>> 97e115b (11.11 step-3 this add button in connect mails send)
+def terms_view(request):
+    return render(request, 'terms.html')
+
+def cookies_view(request):
+    return render(request, 'cookies1.html')

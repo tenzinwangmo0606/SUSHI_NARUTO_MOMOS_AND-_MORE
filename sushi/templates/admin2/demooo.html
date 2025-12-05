@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>All Scroll Effects Demo</title>
+
+<style>
+    body{
+        margin:0;
+        padding:0;
+        font-family:Arial, sans-serif;
+        background:#f2f2f2;
+        height:250vh;
+    }
+
+    /* Sticky Header Hide/Show */
+    header{
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        background:#000;
+        color:#fff;
+        padding:20px;
+        text-align:center;
+        font-size:20px;
+        transition:0.4s ease;
+        z-index:1000;
+    }
+    header.hide{
+        transform:translateY(-100%);
+    }
+
+    .section{
+        width:80%;
+        margin:120px auto;
+        padding:40px;
+        background:#fff;
+        border-radius:12px;
+        box-shadow:0 5px 15px rgba(0,0,0,0.2);
+        opacity:0;
+        transition:0.8s ease;
+    }
+
+    /* EFFECTS */
+    .from-left{
+        transform:translateX(-80px);
+    }
+    .from-right{
+        transform:translateX(80px);
+    }
+    .zoom{
+        transform:scale(0.6);
+    }
+    .blur{
+        filter:blur(10px);
+        transform:translateY(40px);
+    }
+
+    /* Reveal Active State */
+    .reveal{
+        opacity:1 !important;
+        transform:none !important;
+        filter:none !important;
+    }
+</style>
+</head>
+<body>
+
+<header id="header">Sticky Header (Scroll Down Hide / Scroll Up Show)</header>
+
+<div class="section from-left">✨ From Left Reveal Content</div>
+<div class="section from-right">✨ From Right Reveal Content</div>
+<div class="section zoom">✨ Scale Zoom Reveal Content</div>
+<div class="section blur">✨ Blur Reveal Content</div>
+
+<div class="section from-left">✨ Section 1</div>
+<div class="section from-right">✨ Section 2</div>
+<div class="section zoom">✨ Section 3</div>
+<div class="section blur">✨ Section 4</div>
+
+
+<script>
+// Sticky Header Hide/Show on Scroll
+let lastScroll = 0;
+const header = document.getElementById("header");
+
+window.addEventListener("scroll", () => {
+    let currentScroll = window.pageYOffset;
+    if (currentScroll > lastScroll) {
+        header.classList.add("hide");  // Scroll down → Hide
+    } else {
+        header.classList.remove("hide"); // Scroll up → Show
+    }
+    lastScroll = currentScroll;
+});
+
+// Reveal Effects
+const sections = document.querySelectorAll(".section");
+
+window.addEventListener("scroll", () => {
+    sections.forEach(sec => {
+        const top = sec.getBoundingClientRect().top;
+        if (top < window.innerHeight - 100) {
+            sec.classList.add("reveal");
+        }
+    });
+});
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Scroll Effects Demo</title>
+
+<style>
+    body{
+        margin:0;
+        padding:0;
+        font-family:Arial, sans-serif;
+        background:#f4f4f4;
+        height:300vh;
+    }
+
+    .section{
+        width:80%;
+        margin:120px auto;
+        padding:40px;
+        background:white;
+        border-radius:12px;
+        box-shadow:0 5px 15px rgba(0,0,0,0.2);
+        opacity:0;
+        transform:translateY(60px);
+        transition:0.9s ease;
+    }
+    .reveal{
+        opacity:1!important;
+        transform:none!important;
+    }
+
+    /* 1. Diagonal Reveal */
+    .diagonal{
+        transform:translate(-80px, 80px);
+        opacity:0;
+    }
+
+    /* 2. 3D Flip Reveal */
+    .flip{
+        transform:rotateY(-90deg);
+        transform-origin:left;
+    }
+
+    /* 3. Parallax Section */
+    .parallax-box{
+        height:300px;
+        border-radius:12px;
+        background:url('https://picsum.photos/800/400?random') center/cover;
+        background-attachment: fixed;
+        opacity:0;
+        transition:0.8s ease;
+        transform:scale(0.9);
+    }
+
+    /* 4. Wave Fade Reveal */
+    .wave{
+        opacity:0;
+        transform:translateY(40px) scale(0.98);
+        filter:blur(5px);
+    }
+
+    /* 5. Rotate Reveal */
+    .rotate{
+        transform:rotate(-15deg);
+        opacity:0;
+    }
+
+    /* 6. Skew Reveal */
+    .skew{
+        transform:skewX(20deg) translateX(-60px);
+        opacity:0;
+    }
+
+    /* 7. Underline Heading Reveal */
+    .heading{
+        font-size:32px;
+        font-weight:bold;
+        opacity:0;
+        position:relative;
+    }
+    .heading::after{
+        content:"";
+        position:absolute;
+        bottom:-5px;
+        left:0;
+        width:0%;
+        height:4px;
+        background:#000;
+        transition:0.8s ease;
+    }
+    .heading.reveal::after{
+        width:100%;
+    }
+</style>
+</head>
+<body>
+
+<h1 style="text-align:center; padding-top:40px;">✨ Premium Scroll Effects Demo ✨</h1>
+
+<div class="section diagonal">1️⃣ Diagonal Slide & Fade Reveal</div>
+
+<div class="section flip">2️⃣ 3D Flip Reveal</div>
+
+<div class="parallax-box section">3️⃣ Parallax Scroll Reveal</div>
+
+<div class="section wave">4️⃣ Wave Fade Reveal</div>
+
+<div class="section rotate">5️⃣ Rotate-in Reveal</div>
+
+<div class="section skew">6️⃣ Skew Stretch Reveal</div>
+
+<h2 class="section heading">7️⃣ Underline Heading Reveal</h2>
+
+
+<script>
+const elements = document.querySelectorAll(".section, .heading");
+
+window.addEventListener("scroll", () => {
+    elements.forEach(el => {
+        const pos = el.getBoundingClientRect().top;
+        if(pos < window.innerHeight - 100){
+            el.classList.add("reveal");
+        }
+    });
+});
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Overlay Box Effect</title>
+
+<style>
+    body{
+        margin:0;
+        padding:0;
+        background:#f2f2f2;
+        font-family:Arial;
+        height:200vh;
+    }
+
+    .container{
+        width:80%;
+        margin:120px auto;
+        position:relative;
+    }
+
+    /* Background main image */
+    .bg-image{
+        width:100%;
+        height:350px;
+        border-radius:20px;
+        object-fit:cover;
+        filter:brightness(80%);
+        transition:0.8s ease;
+        opacity:0;
+        transform:translateY(50px);
+    }
+
+    /* Box Shape Overlay */
+    .overlay-box{
+        position:absolute;
+        top:30%;
+        left:50%;
+        transform:translateX(-50%);
+        width:70%;
+        height:180px;
+        background:rgba(255,255,255,0.75);
+        border-radius:20px;
+        backdrop-filter:blur(10px);
+        box-shadow:0 5px 20px rgba(0,0,0,0.2);
+        transition:0.8s ease;
+        opacity:0;
+        transform:translate(-50%, 60px);
+    }
+
+    /* Floating Image on top of box */
+    .top-image{
+        position:absolute;
+        top:10%;
+        right:5%;
+        width:180px;
+        height:180px;
+        border-radius:20px;
+        object-fit:cover;
+        box-shadow:0 5px 20px rgba(0,0,0,0.3);
+        transition:1s ease;
+        opacity:0;
+        transform:translateY(40px) scale(0.9);
+    }
+
+    /* Reveal Animation */
+    .reveal{
+        opacity:1 !important;
+        transform:translate(0,0) scale(1) !important;
+    }
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center; padding-top:40px;">✨ Image Over Image + Box Shape Effect</h2>
+
+<div class="container">
+    <img src="https://picsum.photos/900/450?random" class="bg-image section">
+
+    <div class="overlay-box section"></div>
+
+    <img src="https://picsum.photos/300/300?random=2" class="top-image section">
+</div>
+
+<script>
+const items = document.querySelectorAll(".section");
+
+window.addEventListener("scroll", () => {
+    items.forEach(el => {
+        let pos = el.getBoundingClientRect().top;
+        if(pos < window.innerHeight - 100){
+            el.classList.add("reveal");
+        }
+    });
+});
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Overlay Box Effect</title>
+
+<style>
+    body{
+        margin:0;
+        padding:0;
+        background:#f2f2f2;
+        font-family:Arial;
+        height:200vh;
+    }
+
+    .container{
+        width:80%;
+        margin:120px auto;
+        position:relative;
+    }
+
+    /* Background main image */
+    .bg-image{
+        width:100%;
+        height:350px;
+        border-radius:20px;
+        object-fit:cover;
+        filter:brightness(80%);
+        transition:0.8s ease;
+        opacity:0;
+        transform:translateY(50px);
+    }
+
+    /* Box Shape Overlay */
+    .overlay-box{
+        position:absolute;
+        top:30%;
+        left:50%;
+        transform:translateX(-50%);
+        width:70%;
+        height:180px;
+        background:rgba(255,255,255,0.75);
+        border-radius:20px;
+        backdrop-filter:blur(10px);
+        box-shadow:0 5px 20px rgba(0,0,0,0.2);
+        transition:0.8s ease;
+        opacity:0;
+        transform:translate(-50%, 60px);
+    }
+
+    /* Floating Image on top of box */
+    .top-image{
+        position:absolute;
+        top:10%;
+        right:5%;
+        width:180px;
+        height:180px;
+        border-radius:20px;
+        object-fit:cover;
+        box-shadow:0 5px 20px rgba(0,0,0,0.3);
+        transition:1s ease;
+        opacity:0;
+        transform:translateY(40px) scale(0.9);
+    }
+
+    /* Reveal Animation */
+    .reveal{
+        opacity:1 !important;
+        transform:translate(0,0) scale(1) !important;
+    }
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center; padding-top:40px;">✨ Image Over Image + Box Shape Effect</h2>
+
+<div class="container">
+    <img src="https://picsum.photos/900/450?random" class="bg-image section">
+
+    <div class="overlay-box section"></div>
+
+    <img src="https://picsum.photos/300/300?random=2" class="top-image section">
+</div>
+
+<script>
+const items = document.querySelectorAll(".section");
+
+window.addEventListener("scroll", () => {
+    items.forEach(el => {
+        let pos = el.getBoundingClientRect().top;
+        if(pos < window.innerHeight - 100){
+            el.classList.add("reveal");
+        }
+    });
+});
+</script>
+
+</body>
+</html>

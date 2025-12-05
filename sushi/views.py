@@ -612,35 +612,98 @@ def order_action(request, order_id):
         return redirect('order_details')
 
 @login_required
-def order_action_admin(request, order_id):
+def order_action_admin(request, order_id=None):
     try:
         if not request.user.is_staff and getattr(request.user, "user_type", None) != "management":
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Unauthorized'}, status=403)
             return redirect('admin2_login')
 
-        order = get_object_or_404(Order, id=order_id)
-
         if request.method == 'POST':
             action = request.POST.get('action')
             reason = request.POST.get('reason', '')
+            
+            # Handle bulk orders from POST or single order from URL
+            order_ids = request.POST.getlist('order_ids')
+            if not order_ids and order_id:
+                order_ids = [order_id]
+            
+            if not order_ids:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': 'No orders selected'}, status=400)
+                messages.error(request, 'No orders selected')
+                return redirect('order_food_table')
+            
+            # Fetch all orders to update
+            orders = Order.objects.filter(id__in=order_ids)
+            if not orders.exists():
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': 'Orders not found'}, status=404)
+                messages.error(request, 'Orders not found')
+                return redirect('order_food_table')
+            
+            # Determine new status based on action
+            new_status = None
+            subject = ""
+             
+            if action == "accept":
+                subject = "Order Accepted"
+                new_status = "Accepted"
+            elif action == "making":
+                subject = "Order Being Prepared"
+                new_status = "Making"
+            elif action == "collect":
+                subject = "Order Ready to Collect"
+                new_status = "Ready to Collect"
+            elif action == "delivered":
+                subject = "Order Delivered"
+                new_status = "Delivered"
+            elif action == "cancel":
+                subject = "Order Cancelled"
+                new_status = "Cancelled"
+            else:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': 'Invalid action'}, status=400)
+                return redirect('order_food_table')
 
-            def build_html(body_title, extra_message=""):
-                return f"""
+            # Update all selected orders with new status
+            for order in orders:
+                order.status = new_status
+                order.save()
+                
+                # Build personalized email for each order
+                if action == "accept":
+                    msg = "Good news! Your order has been accepted and will be prepared soon."
+                elif action == "making":
+                    msg = "Your order is currently being prepared by our chef."
+                elif action == "collect":
+                    msg = "Please come to the restaurant to collect your order."
+                elif action == "delivered":
+                    msg = "Enjoy your meal! Thank you for choosing us."
+                elif action == "cancel":
+                    msg = f"Reason: {reason}" if reason else "Your order has been cancelled."
+                else:
+                    msg = ""
+                
+                order_details = f"""
+                <p><strong>Order ID:</strong> #{order.id}</p>
+                <p><strong>Item:</strong> {order.item}</p>
+                <p><strong>Quantity:</strong> {order.qty}</p>
+                <p><strong>Price per item:</strong> {order.price} CHF</p>
+                <p><strong>Total Price:</strong> {order.total_price} CHF</p>
+                <p><strong>Delivery:</strong> {order.delivery}</p>
+                <p><strong>Address:</strong> {order.address}</p>
+                <p><strong>Mobile:</strong> {order.mobile}</p>
+                """
+                
+                html_body = f"""
                 <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8f8f8;">
                     <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto;">
-                        <h2 style="color: #d81b60; text-align:center;">{body_title}</h2>
-                        <p>{extra_message}</p>
+                        <h2 style="color: #d81b60; text-align:center;">Order Status Update</h2>
+                        <p>{msg}</p>
                         <h3 style="margin-top: 20px;">Order Details</h3>
                         <div style="border: 1px solid #ddd; padding: 15px; border-radius: 6px; background:#fafafa;">
-                            <p><strong>Order ID:</strong> #{order.id}</p>
-                            <p><strong>Item:</strong> {order.item}</p>
-                            <p><strong>Quantity:</strong> {order.qty}</p>
-                            <p><strong>Price per item:</strong> {order.price} CHF</p>
-                            <p><strong>Total Price:</strong> {order.total_price} CHF</p>
-                            <p><strong>Delivery:</strong> {order.delivery}</p>
-                            <p><strong>Address:</strong> {order.address}</p>
-                            <p><strong>Mobile:</strong> {order.mobile}</p>
+                            {order_details}
                         </div>
                         <p style="margin-top: 25px;">
                             Thank you for ordering with <strong>Sushi Naruto Momos</strong>.
@@ -648,49 +711,25 @@ def order_action_admin(request, order_id):
                     </div>
                 </div>
                 """
+                
+                # Send email for this order
+                try:
+                    to = [{"email": order.email}]
+                    send_new_email(to, subject=subject, content=html_body)
+                except Exception as mail_error:
+                    logger.exception(f"Mail send failed for order {order.id}: {mail_error}")
 
-            if action == "accept":
-                subject = "Order Accepted"
-                html_body = build_html("Your Order Has Been Accepted", "Good news! Your order has been accepted and will be prepared soon.")
-                order.status = "Accepted"
-            elif action == "making":
-                subject = "Order Being Prepared"
-                html_body = build_html("We Are Preparing Your Order", "Your order is currently being prepared by our chef.")
-                order.status = "Making"
-            elif action == "collect":
-                subject = "Order Ready to Collect"
-                html_body = build_html("Your Order is Ready for Pickup", "Please come to the restaurant to collect your order.")
-                order.status = "Ready to Collect"
-            elif action == "delivered":
-                subject = "Order Delivered"
-                html_body = build_html("Your Order Has Been Delivered", "Enjoy your meal! Thank you for choosing us.")
-                order.status = "Delivered"
-            elif action == "cancel":
-                subject = "Order Cancelled"
-                msg = f"Reason: {reason}" if reason else "Your order has been cancelled."
-                html_body = build_html("Order Cancelled", msg)
-                order.status = "Cancelled"
-            else:
-                return
-
-            try:
-                to = [{"email": order.email}]
-                send_new_email(to, subject=subject, content=html_body)
-            except Exception as mail_error:
-                logger.exception(f"Mail send failed: {mail_error}")
-
-            order.save()
             pending_count = Order.objects.filter(status__in=['Accepted', 'Making']).count()
 
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
-                    'message': f'Order {action}ed successfully',
-                    'new_status': order.status,
+                    'message': f'{len(orders)} order(s) {action}ed successfully',
+                    'new_status': new_status,
                     'pending_count': pending_count,
                 })
 
-            messages.success(request, f'Order {action}ed successfully')
+            messages.success(request, f'{len(orders)} order(s) {action}ed successfully')
             return redirect('order_food_table')
 
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':

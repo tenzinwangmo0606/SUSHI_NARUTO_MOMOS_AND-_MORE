@@ -59,6 +59,118 @@
     input[type="submit"]:hover {
         background-color: #e04343;
     }
+
+    /* New visual effect utilities */
+    .img-overlay-wrapper {
+        position: relative;
+        display: inline-block;
+        overflow: visible;
+        border-radius: 12px;
+    }
+
+    .img-overlay-wrapper::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(255, 77, 77, 0.08), rgba(0, 0, 0, 0.06));
+        mix-blend-mode: multiply;
+        opacity: 0;
+        transition: opacity .45s ease, transform .45s ease;
+        transform: translateY(6px) scale(1.02);
+    }
+
+    .img-overlay-wrapper.hovered::after {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    /* Floating subtle motion */
+    .float {
+        transition: transform 0.8s cubic-bezier(.2, .9, .3, 1);
+        will-change: transform;
+    }
+
+    .float[data-float="true"] {
+        transform-origin: center;
+    }
+
+    /* Parallax target */
+    [data-parallax] {
+        will-change: transform;
+        transition: transform .12s linear;
+    }
+
+    /* Scroll reveal */
+    .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity .6s ease, transform .6s ease;
+        will-change: opacity, transform;
+    }
+
+    .reveal.reveal-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* 3D flip reveal */
+    .flip-reveal {
+        transform-style: preserve-3d;
+        perspective: 1000px;
+        transition: transform 0.8s cubic-bezier(.2, .9, .3, 1), opacity .5s ease;
+        transform-origin: center;
+        opacity: 0;
+    }
+
+    .flip-reveal.reveal-visible {
+        transform: rotateY(0) translateZ(0);
+        opacity: 1;
+    }
+
+    .flip-reveal.init {
+        transform: rotateY(20deg) translateZ(-20px);
+    }
+
+    /* blur reveal */
+    .blur-reveal {
+        filter: blur(6px);
+        transition: filter .6s ease, opacity .6s ease;
+        opacity: .85;
+    }
+
+    .blur-reveal.reveal-visible {
+        filter: blur(0);
+        opacity: 1;
+    }
+
+    /* small box-shape accent */
+    .box-shape {
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        transition: transform .35s ease, box-shadow .35s ease;
+    }
+
+    .box-shape:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    /* subtle highlight for auto-scroll results */
+    .highlight {
+        animation: highlight-animation 2s ease-out;
+    }
+
+    @keyframes highlight-animation {
+        0% {
+            box-shadow: 0 0 24px rgba(185, 28, 28, 0.26);
+        }
+
+        100% {
+            box-shadow: none;
+        }
+    }
 </style>
 <section class="relative bg-gradient-to-r from-red-50 to-white py-12 mb-8">
     <div class="container mx-auto px-4 flex flex-col md:flex-row items-center">
@@ -71,8 +183,11 @@
                 a Table</a>
         </div>
         <div class="w-full md:w-1/2 flex justify-center items-center reste">
-            <img src="{% static 'images/restaurant_hero.jpg' %}" alt="SUSHI NARUTO MOMOS AND MORE Restaurant"
-                class="restaurant-hero-img rounded-lg shadow-lg w-full max-w-xs sm:max-w-md fade-in mx-auto">
+            <div class="img-overlay-wrapper reveal box-shape" data-role="hero-wrapper">
+                <img src="{% static 'images/restaurant_hero.jpg' %}" alt="SUSHI NARUTO MOMOS AND MORE Restaurant"
+                    class="restaurant-hero-img rounded-lg shadow-lg w-full max-w-xs sm:max-w-md float" data-float="true"
+                    data-parallax="0.18">
+            </div>
         </div>
     </div>
 </section>
@@ -173,7 +288,7 @@
 
 <!-- Reservation Form -->
 <div class="fade-in px-4">
-    <div class="reservation-box">
+    <div class="reservation-box blur-reveal flip-reveal init box-shape reveal">
         <form method="post">
             {% csrf_token %}
             <label for="name">Name:</label>
@@ -203,8 +318,62 @@
 <script>
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
-    // Set the min attribute to today's date
     document.getElementById("date").setAttribute("min", today);
+
+    // Small modular scroll/parallax/reveal driver
+    (function () {
+        const revealed = new WeakSet();
+        // IntersectionObserver for reveal/flip/blur
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const el = entry.target;
+                if (entry.isIntersecting) {
+                    el.classList.add('reveal-visible');
+                    revealed.add(el);
+                } else {
+                    // keep revealed items visible; for hide-on-scroll-up toggle remove if wanted
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal, .flip-reveal, .blur-reveal, .img-overlay-wrapper').forEach(el => obs.observe(el));
+
+        // Parallax on scroll (simple, throttled)
+        let lastY = window.scrollY;
+        let ticking = false;
+
+        function onScroll() {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const dy = window.scrollY;
+                    // hide/show top wrapper (optional demonstration)
+                    const heroWrapper = document.querySelector('[data-role="hero-wrapper"]');
+                    if (heroWrapper) {
+                        if (dy > lastY + 10) heroWrapper.style.opacity = '0.92'; // scrolling down
+                        else if (dy < lastY - 10) heroWrapper.style.opacity = '1'; // scrolling up
+                    }
+                    document.querySelectorAll('[data-parallax]').forEach(el => {
+                        const depth = parseFloat(el.getAttribute('data-parallax')) || 0.1;
+                        const rect = el.getBoundingClientRect();
+                        const winH = window.innerHeight;
+                        // center-based parallax
+                        const offset = ((rect.top + rect.height / 2) - winH / 2) * -depth;
+                        el.style.transform = `translate3d(0, ${offset}px, 0)`;
+                    });
+                    ticking = false;
+                    lastY = dy;
+                });
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // small hover effect for wrappers
+        document.querySelectorAll('.img-overlay-wrapper').forEach(w => {
+            w.addEventListener('mouseenter', () => w.classList.add('hovered'));
+            w.addEventListener('mouseleave', () => w.classList.remove('hovered'));
+        });
+    })();
 </script>
 
 {% endblock %}

@@ -290,6 +290,17 @@
             width: 100%;
         }
     }
+
+    /* small shared utilities */
+    .img-overlay-wrapper { position: relative; border-radius: 8px; overflow: hidden; display:inline-block; }
+    .img-overlay-wrapper::after { content: ""; position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.12), transparent); opacity:0; transition:opacity .28s; }
+    .img-overlay-wrapper.hovered::after { opacity:1; }
+    .reveal { opacity:0; transform:translateY(20px); transition: opacity .6s, transform .6s; }
+    .reveal.reveal-visible { opacity:1; transform:translateY(0); }
+    .flip-reveal.init { transform: rotateX(14deg) translateZ(-16px); opacity:0; }
+    .flip-reveal.reveal-visible { transform: rotateX(0) translateZ(0); opacity:1; transition: transform .7s, opacity .5s; }
+    .blur-reveal { filter: blur(5px); transition: filter .6s; }
+    .blur-reveal.reveal-visible { filter: none; }
 </style>
 
 <section class="relative bg-gradient-to-r from-red-50 to-white py-12 mb-8">
@@ -388,13 +399,17 @@
                             <div class="menu-category-title">{{ category.name }}</div>
                             <div class="menu-cards">
                                 {% for item in items %}
-                                    <div class="menu-card" id="menu-item-{{ item.id }}">
+                                    <div class="menu-card reveal flip-reveal init blur-reveal" id="menu-item-{{ item.id }}">
                                         {% if item.image %}
-                                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="cursor-pointer"
-                                            onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
+                                        <div class="img-overlay-wrapper" data-parallax="0.06">
+                                            <img src="{{ item.image.url }}" alt="{{ item.name }}" class="cursor-pointer"
+                                                onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
+                                        </div>
                                         {% else %}
-                                        <img src="{% static 'images/no-image.png' %}" alt="No image" class="cursor-pointer"
-                                            onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
+                                        <div class="img-overlay-wrapper" data-parallax="0.06">
+                                            <img src="{% static 'images/no-image.png' %}" alt="No image" class="cursor-pointer"
+                                                onclick="addToCart('{{ item.id }}', '{{ item.name|escapejs }}', {{ item.price }})">
+                                        </div>
                                         {% endif %}
                                         <div class="menu-card-content">
                                             <div class="menu-card-title">{{ item.name }}</div>
@@ -657,6 +672,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // small reveal/parallax driver (appended)
+    (function(){
+        const io = new IntersectionObserver((entries)=>{
+            entries.forEach(e=>{
+                if (e.isIntersecting) e.target.classList.add('reveal-visible');
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll('.reveal, .flip-reveal, .blur-reveal, .img-overlay-wrapper').forEach(el => io.observe(el));
+
+        // parallax small driver for wrappers
+        window.addEventListener('scroll', () => {
+            document.querySelectorAll('[data-parallax]').forEach(el => {
+                const depth = parseFloat(el.getAttribute('data-parallax')) || 0.06;
+                const rect = el.getBoundingClientRect();
+                const offset = ((rect.top + rect.height/2) - window.innerHeight/2) * -depth;
+                el.style.transform = `translate3d(0, ${offset}px, 0)`;
+            });
+        }, { passive: true });
+
+        // hover overlay state
+        document.querySelectorAll('.img-overlay-wrapper').forEach(w => {
+            w.addEventListener('mouseenter', ()=> w.classList.add('hovered'));
+            w.addEventListener('mouseleave', ()=> w.classList.remove('hovered'));
+        });
+    })();
+
 });
 </script>
 

@@ -49,30 +49,94 @@
             </tr>
             <!-- Orders for this email -->
             {% for order in group.list %}
-            <tr>
-                <td class="px-4 py-2 border">{{ forloop.counter }}</td>
-                <td class="px-4 py-2 border">{{ order.item }}</td>
-                <td class="px-4 py-2 border">{{ order.mobile }}</td>
-                <td class="px-4 py-2 border">{{ order.qty }}</td>
-                <td class="px-4 py-2 border">{{ order.price|floatformat:2 }} CHF</td>
-                <td class="px-4 py-2 border">{{ order.total_price|floatformat:2 }} CHF</td>
-                <td class="px-4 py-2 border">{{ order.created_at|date:"Y-m-d" }}</td>
-                <td class="px-4 py-2 border">{{ order.created_at|time:"H:i:s" }}</td>
-                <td id="status-{{ order.id }}" class="status-cell px-4 py-2 border {% if order.status == 'Accepted' %}bg-green-100{% elif order.status == 'Making' %}bg-yellow-100{% elif order.status == 'Ready to Collect' %}bg-blue-100{% elif order.status == 'Delivered' %}bg-purple-100{% elif order.status == 'Cancelled' %}bg-red-100{% endif %}" data-status="{{ order.status }}">
-                    {{ order.status }}
-                </td>
-                <td class="px-4 py-2 border">
-                    <form method="post" action="{% url 'order_action_admin' order.id %}" class="inline order-action-form" data-order-id="{{ order.id }}">
-                        {% csrf_token %}
-                        <input type="hidden" name="reason" class="cancel-reason-input">
-                        <button type="submit" name="action" value="accept" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept Order</button>
-                        <button type="submit" name="action" value="making" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Making Order</button>
-                        <button type="submit" name="action" value="collect" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Collect the Order</button>
-                        <button type="submit" name="action" value="delivered" class="bg-purple-500 text-white px-2 py-1 rounded text-xs" onclick="return confirm('Are you sure you want to deliver this order?');">Deliver Order</button>
-                        <button type="submit" name="action" value="cancel" class="bg-red-500 text-white px-2 py-1 rounded text-xs cancel-btn">Cancel Order</button>
-                    </form>
-                </td>
-            </tr>
+                {% ifchanged order.created_at|time:"H:i:s" %}
+                    <tr>
+                        <td class="px-4 py-2 border">{{ forloop.counter }}</td>
+
+                        <!-- Items cell: list all items that share this email+time -->
+                        <td class="px-4 py-2 border">
+                            {% for o in group.list %}
+                                {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                    <div>{{ o.item }} <small class="text-xs text-gray-600">(x{{ o.qty }})</small></div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <!-- Mobile (use the first one for this time-group) -->
+                        <td class="px-4 py-2 border">{{ order.mobile }}</td>
+
+                        <!-- Qty column: list qtys for each item in this time-group -->
+                        <td class="px-4 py-2 border">
+                            {% for o in group.list %}
+                                {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                    <div>{{ o.qty }}</div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <!-- Price column: list individual prices for the grouped orders -->
+                        <td class="px-4 py-2 border">
+                            {% for o in group.list %}
+                                {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                    <div>{{ o.price|floatformat:2 }} CHF</div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <!-- Total Price column: list totals for each order in this group/time -->
+                        <td class="px-4 py-2 border">
+                            {% for o in group.list %}
+                                {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                    <div>{{ o.total_price|floatformat:2 }} CHF</div>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <td class="px-4 py-2 border">{{ order.created_at|date:"Y-m-d" }}</td>
+                        <td class="px-4 py-2 border">{{ order.created_at|time:"H:i:s" }}</td>
+
+                        <!-- Status cell: show combined visible statuses but keep hidden spans per order for JS updates -->
+                        <td class="px-4 py-2 border">
+                            <div class="text-sm text-gray-700">
+                                {% for o in group.list %}
+                                    {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                        <div class="flex items-center mb-1">
+                                            <input type="checkbox" class="order-checkbox mr-2" data-order-id="{{ o.id }}" value="{{ o.id }}">
+                                            <span class="inline-block">{{ o.status }}</span>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <!-- hidden individual status spans so client JS can update by id -->
+                            {% for o in group.list %}
+                                {% if o.created_at|time:"H:i:s" == order.created_at|time:"H:i:s" %}
+                                    <span id="status-{{ o.id }}" class="status-cell hidden" data-status="{{ o.status }}"></span>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        <!-- Actions: include one form per underlying order (keeps existing JS behavior) -->
+                        <td class="px-4 py-2 border">
+                            <!-- Single visible action form for this time-group.
+                                 It now includes one hidden input per underlying order (name="order_ids")
+                                 so the chosen action can be applied to all grouped orders. -->
+                            <form method="post" action="{% url 'order_action_admin' order.id %}" class="inline order-action-form" data-order-id="{{ order.id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="reason" class="cancel-reason-input">
+                                <div class="order-ids-container">
+                                    <!-- order_ids will be added dynamically based on checked checkboxes -->
+                                </div>
+                                <button type="submit" name="action" value="accept" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Accept</button>
+                                <button type="submit" name="action" value="making" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Making</button>
+                                <button type="submit" name="action" value="collect" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Collect</button>
+                                <button type="submit" name="action" value="delivered" class="bg-purple-500 text-white px-2 py-1 rounded text-xs" onclick="return confirm('Are you sure you want to deliver this order?');">Deliver</button>
+                                <button type="submit" name="action" value="cancel" class="bg-red-500 text-white px-2 py-1 rounded text-xs cancel-btn">Cancel</button>
+                            </form>
+
+                            <!-- Keep hidden individual status spans so client JS can still find and update each order by id -->
+                        </td>
+                    </tr>
+                {% endifchanged %}
             {% endfor %}
             {% endfor %}
         </tbody>
@@ -94,7 +158,7 @@
 
 <!-- Audio element for pending order alert sound -->
 <audio id="pending-beep-audio" preload="auto" playsinline>
-    <source src="{% static 'sounds/beep.mp3' %}" type="audio/mpeg">
+    <source src="{% static 'sounds/beep1.mp3' %}" type="audio/mpeg">
 </audio>
 
 <!-- Load Firebase compat SDKs (works with firebase.initializeApp / firebase.messaging usage below).
@@ -173,58 +237,292 @@
     }
     const CSRFTOKEN = getCookie('csrftoken');
 
-    // Handle form submissions
-    document.querySelectorAll('.order-action-form').forEach(form => {
-        form.addEventListener('submit', async function (e) {
-            e.preventDefault();
+    // Helper: populate order_ids hidden inputs based on checked checkboxes
+    function updateOrderIdsInForm(form) {
+        const container = form.querySelector('.order-ids-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        // Collect all checked order IDs in the same row
+        const checkboxes = form.closest('tr').querySelectorAll('.order-checkbox:checked');
+        checkboxes.forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'order_ids';
+            input.value = checkbox.value;
+            container.appendChild(input);
+        });
+    }
 
-            const formData = new FormData(this);
-            const action = formData.get('action');
-            const orderId = this.dataset.orderId;
+    // Print mini-card for a given table row (opens a print preview window)
+    function printMiniCardForRow(row) {
+        if (!row) return;
 
+        // cells: 0:s.no,1:Item,2:Mobile,3:Qty,4:Price,5:Total,6:Date,7:Time,...
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 8) return;
+
+        const itemsCell = cells[1];
+        const mobile = cells[2].textContent.trim();
+        const qtyCell = cells[3];
+        const priceCell = cells[4];
+        const totalCell = cells[5];
+        const date = cells[6].textContent.trim();
+        const time = cells[7].textContent.trim();
+
+        // Collect line elements (assumes same order as checkboxes rendered)
+        const itemLines = Array.from(itemsCell.querySelectorAll('div')).map(d => d.innerHTML.trim());
+        const qtyLines = Array.from(qtyCell.querySelectorAll('div')).map(d => d.textContent.trim());
+        const priceLines = Array.from(priceCell.querySelectorAll('div')).map(d => d.textContent.trim());
+        const totalLines = Array.from(totalCell.querySelectorAll('div')).map(d => d.textContent.trim());
+
+        // Find checkboxes and determine which to print
+        const allCheckboxes = Array.from(row.querySelectorAll('.order-checkbox'));
+        const checkedIndexes = allCheckboxes.map((cb, idx) => cb.checked ? idx : -1).filter(i => i >= 0);
+
+        // If none checked -> print all
+        const indexesToPrint = checkedIndexes.length > 0 ? checkedIndexes : Array.from(itemLines.keys());
+
+        // Build HTML rows for selected items
+        let itemsHtml = '';
+        indexesToPrint.forEach(i => {
+            const item = itemLines[i] || '';
+            const qty = qtyLines[i] || '';
+            const price = priceLines[i] || '';
+            const total = totalLines[i] || '';
+            itemsHtml += `<tr>
+                <td style="padding:6px;border-bottom:1px solid #eee">${item}</td>
+                <td style="padding:6px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+                <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${price}</td>
+                <td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${total}</td>
+            </tr>`;
+        });
+
+        const docHtml = `
+            <!doctype html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Order Print</title>
+              <style>
+                body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:10px;color:#111}
+                .card{width:320px}
+                h2{font-size:16px;margin:0 0 8px}
+                .meta{font-size:13px;color:#333;margin-bottom:6px}
+                table{width:100%;border-collapse:collapse;margin-top:8px}
+                th{font-size:13px;text-align:left;padding:6px;border-bottom:1px solid #ccc}
+                td{font-size:13px}
+                .right{text-align:right}
+                .center{text-align:center}
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <h2>Order</h2>
+                <div class="meta"><strong>Mobile:</strong> ${mobile}</div>
+                <div class="meta"><strong>Date:</strong> ${date} &nbsp; <strong>Time:</strong> ${time}</div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th class="center">Qty</th>
+                      <th class="right">Price</th>
+                      <th class="right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </body>
+            </html>
+        `;
+
+        // Hidden iframe printing (auto opens print dialog)
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+
+        const idoc = iframe.contentDocument || iframe.contentWindow.document;
+        idoc.open();
+        idoc.write(docHtml);
+        idoc.close();
+
+        function doPrintAndCleanup() {
             try {
-                const response = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': CSRFTOKEN
+                const win = iframe.contentWindow || iframe;
+                win.focus();
+                if (typeof win.print === 'function') win.print();
+            } catch (err) {
+                console.warn('Print failed:', err);
+            }
+            setTimeout(() => {
+                if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+            }, 800);
+        }
+
+        iframe.onload = function () {
+            setTimeout(doPrintAndCleanup, 200);
+        };
+        setTimeout(doPrintAndCleanup, 500);
+    }
+
+    // Handle form submissions
+    function initOrderForms() {
+        document.querySelectorAll('.order-action-form').forEach(form => {
+            // Record which submit button was clicked (so we can include its value in FormData)
+            form.querySelectorAll('button[type="submit"]').forEach(btn => {
+                btn.addEventListener('click', function (ev) {
+                    // store on the form; will be consumed by the submit handler
+                    form.dataset.clickedAction = this.value;
+
+                    // If Accept clicked, print the current row as a mini card (user gesture)
+                    if (this.value === 'accept') {
+                        const row = form.closest('tr');
+                        printMiniCardForRow(row);
                     }
                 });
+            });
+             // Add checkbox change listener to the row
+             const row = form.closest('tr');
+             if (row) {
+                 row.querySelectorAll('.order-checkbox').forEach(checkbox => {
+                     checkbox.addEventListener('change', function () {
+                         updateOrderIdsInForm(form);
+                     });
+                 });
+             }
 
-                const data = await response.json();
+             // Form submission
+             form.addEventListener('submit', async function (e) {
+                 e.preventDefault();
 
-                if (data.success) {
-                    // Show toast notification
-                    toastr.success(data.message);
+                 // Update order_ids based on checked checkboxes
+                 updateOrderIdsInForm(this);
 
-                    // Update status cell
-                    const statusCell = document.getElementById(`status-${orderId}`);
-                    if (statusCell) {
-                        statusCell.textContent = data.new_status;
-                        updateStatusColor(statusCell, data.new_status);
-                    }
+                 // Check if any orders are selected
+                 const checkedBoxes = this.closest('tr').querySelectorAll('.order-checkbox:checked');
+                 if (checkedBoxes.length === 0) {
+                     toastr.warning('Please select at least one order');
+                     return;
+                 }
 
-                    // Update navbar badge if order count changed
-                    if (data.pending_count !== undefined) {
-                        updateOrderBadge(data.pending_count);
-                        showPendingOrdersAlert(data.pending_count); // update banner + toast
-                    } else {
-                        showPendingOrdersAlert(); // fallback compute from DOM
-                    }
-
-                    // Refresh orders table
-                    refreshTbody('order-food-tbody');
-                } else {
-                    toastr.error(data.message || 'An error occurred');
+                const formData = new FormData(this);
+                // include the clicked button value (if any) — browsers don't add the clicked submit to FormData when submit is handled by JS
+                const clicked = this.dataset.clickedAction;
+                if (clicked) {
+                    formData.set('action', clicked);
+                    delete this.dataset.clickedAction;
                 }
-            } catch (error) {
-                toastr.error('Failed to process the order');
-                console.error('Error:', error);
-            }
-        });
-    });
+                const action = formData.get('action');
+
+                 const formAction = this.getAttribute('action');
+
+                 // Log the form action URL for debugging
+                 console.log('Form action URL:', formAction);
+                 console.log('FormData contents:', {
+                     action: action,
+                     order_ids: formData.getAll('order_ids')
+                 });
+
+                 try {
+                     // Ensure we have a valid action URL
+                     if (!formAction || typeof formAction !== 'string') {
+                         toastr.error('Invalid form action URL. See console for details.');
+                         console.error('Invalid formAction:', formAction, this);
+                         return;
+                     }
+
+                     // Prefer CSRF token from the form itself (csrfmiddlewaretoken input),
+                     // fall back to cookie-based CSRFTOKEN
+                     const csrfFromForm = formData.get('csrfmiddlewaretoken');
+                     const csrfHeader = csrfFromForm || CSRFTOKEN || '';
+
+                     const response = await fetch(formAction, {
+                          method: 'POST',
+                          body: formData,
+                          credentials: 'same-origin',
+                          headers: {
+                              'X-Requested-With': 'XMLHttpRequest',
+                              'X-CSRFToken': csrfHeader
+                          }
+                      });
+
+                    // Check if response is OK (status 200-299)
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HTTP Error:', response.status, errorText);
+                        toastr.error(`Server error: ${response.status} ${response.statusText}\nURL: ${formAction}\nCheck console for details`);
+                        return;
+                    }
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch (parseErr) {
+                        console.error('JSON Parse Error:', parseErr);
+                        const responseText = await response.text();
+                        console.error('Response text:', responseText);
+                        toastr.error('Invalid server response — check console for details');
+                        return;
+                    }
+
+                    if (data.success) {
+                         // Show toast notification
+                         toastr.success(data.message);
+
+                         // Update visible status text and hidden span for each checked order
+                         checkedBoxes.forEach(checkbox => {
+                             const orderId = checkbox.value;
+                            
+                            // Update visible status span in the checkbox row
+                            const checkboxDiv = checkbox.closest('.flex.items-center.mb-1');
+                            if (checkboxDiv) {
+                                const statusSpan = checkboxDiv.querySelector('span.inline-block');
+                                if (statusSpan) {
+                                    statusSpan.textContent = data.new_status;
+                                }
+                            }
+
+                            // Update hidden status cell (for JS color updates)
+                             const statusCell = document.getElementById(`status-${orderId}`);
+                             if (statusCell) {
+                                 statusCell.textContent = data.new_status;
+                                 updateStatusColor(statusCell, data.new_status);
+                             }
+                         });
+
+                        // Uncheck all checkboxes after successful submission
+                        checkedBoxes.forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+
+                         // Update navbar badge if order count changed
+                         if (data.pending_count !== undefined) {
+                             updateOrderBadge(data.pending_count);
+                             showPendingOrdersAlert(data.pending_count);
+                         } else {
+                             showPendingOrdersAlert();
+                         }
+
+                         // Refresh orders table
+                         refreshTbody('order-food-tbody');
+                     } else {
+                        console.error('Backend error:', data);
+                        toastr.error(data.message || 'Backend error — check console');
+                     }
+                 } catch (error) {
+                    console.error('Fetch error:', error);
+                    toastr.error(`Failed to process: ${error.message}`);
+                 }
+             });
+         });
+     }
 
     function updateOrderBadge(count) {
         const badge = document.getElementById('order-count-badge');
@@ -284,13 +582,16 @@
             fd.set('reason', freshTextarea.value || '');
 
             try {
+                // Prefer CSRF token from the form; fallback to cookie-based token.
+                const csrfFromForm = fd.get('csrfmiddlewaretoken');
+                const csrfHeader = csrfFromForm || CSRFTOKEN || '';
                 const resp = await fetch(url, {
                     method: 'POST',
                     body: fd,
                     credentials: 'same-origin',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': CSRFTOKEN
+                        'X-CSRFToken': csrfHeader
                     }
                 });
                 const data = await resp.json();
@@ -341,10 +642,11 @@
                 const current = document.querySelector('#' + tbodyId);
                 if (current && current.innerHTML !== newTbody.innerHTML) {
                     current.innerHTML = newTbody.innerHTML;
-                    // re-initialize behaviour for dynamic parts (modal buttons etc.)
-                    initCancelModal();
-                    // refresh pending banner based on new DOM
-                    showPendingOrdersAlert();
+                    // re-initialize behaviour for dynamic parts
+                    initOrderForms();
+                     initCancelModal();
+                     // refresh pending banner based on new DOM
+                     showPendingOrdersAlert();
                 }
             }
         } catch (e) {
@@ -418,28 +720,36 @@
     function showPendingOrdersAlert(count) {
         let pendingCount = typeof count === 'number' ? count : null;
         if (pendingCount === null) {
-            const statusCells = document.querySelectorAll('.status-cell');
-            pendingCount = 0;
-            statusCells.forEach(cell => {
-                const text = (cell.textContent || cell.innerText || '').trim().toLowerCase();
-                if (text === 'pending') pendingCount += 1;
-            });
-        }
+            // Count each individual "Pending" status in the table
+             const tbody = document.getElementById('order-food-tbody');
+             if (tbody) {
+                const statusSpans = tbody.querySelectorAll('td:nth-child(9) .text-sm.text-gray-700 span:not(.hidden)');
+                 pendingCount = 0;
+                statusSpans.forEach(span => {
+                    const statusText = (span.textContent || '').trim().toLowerCase();
+                     if (statusText.includes('pending')) {
+                         pendingCount++;
+                     }
+                 });
+             } else {
+                 pendingCount = 0;
+             }
+         }
 
-        const banner = document.getElementById('pending-alert-banner');
-        const bannerText = document.getElementById('pending-alert-text');
-        const okBtn = document.getElementById('pending-ok-btn');
-        const beepAudio = document.getElementById('pending-beep-audio');
+         const banner = document.getElementById('pending-alert-banner');
+         const bannerText = document.getElementById('pending-alert-text');
+         const okBtn = document.getElementById('pending-ok-btn');
+         const beepAudio = document.getElementById('pending-beep-audio');
 
-        // ensure OK button has a fresh listener (remove previous)
-        if (okBtn && okBtn.parentNode) {
+         // ensure OK button has a fresh listener (remove previous)
+         if (okBtn && okBtn.parentNode) {
             const newOk = okBtn.cloneNode(true);
             okBtn.parentNode.replaceChild(newOk, okBtn);
-        }
+         }
 
-        const freshOkBtn = document.getElementById('pending-ok-btn');
+         const freshOkBtn = document.getElementById('pending-ok-btn');
 
-        if (pendingCount > 0) {
+         if (pendingCount > 0) {
             toastr.info(`${pendingCount} pending order${pendingCount > 1 ? 's' : ''}`, 'Pending Orders');
 
             if (bannerText) bannerText.textContent = `${pendingCount} pending order${pendingCount > 1 ? 's' : ''} — please review.`;
@@ -471,12 +781,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        initCancelModal();
-        startRealtimeOrders();
+         initOrderForms();
+         initCancelModal();
+         startRealtimeOrders();
 
-        // NOTE: Removed auto-start of background music on page load to respect autoplay/user-gesture policies.
-        // showPendingOrdersAlert will start audio (after 1s) only when pending orders are detected.
-        showPendingOrdersAlert(); // display pending count on load
-    });
+         // NOTE: Removed auto-start of background music on page load to respect autoplay/user-gesture policies.
+         // showPendingOrdersAlert will start audio (after 1s) only when pending orders are detected.
+         showPendingOrdersAlert(); // display pending count on load
+     });
 </script>
 {% endblock %}
